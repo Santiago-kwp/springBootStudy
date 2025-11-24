@@ -1,0 +1,44 @@
+# ------------------------------------
+# 1. Spring Boot/Gradle 관련 파일 (gallery 폴더)
+# ------------------------------------
+# Gradle 빌드 폴더
+/gallery/build/
+/gallery/.gradle/
+
+# IDE가 생성하는 메타데이터 폴더 및 파일 (IntelliJ, Eclipse 등)
+# .gitignore 파일이 springBoot 폴더에 있으므로 /gallery/를 앞에 붙입니다.
+/gallery/.idea/
+/gallery/*.iml
+/gallery/.settings/
+
+# 기타 빌드 부산물
+/gallery/bin/
+/gallery/out/
+/gallery/target/
+
+# Gradle 래퍼 실행 권한 문제 방지 (windows 사용 시)
+# gradlew, gradlew.bat 파일 자체는 포함시키고 싶다면 주석 처리
+# /gallery/gradlew
+# /gallery/gradlew.bat
+
+
+# ------------------------------------
+# 2. Vue/Vite 관련 파일 (gallery/frontend 폴더)
+# ------------------------------------
+# npm이 설치한 모든 외부 의존성 폴더 (가장 중요)
+/gallery/frontend/node_modules/
+
+# Vite가 프로덕션 빌드 시 생성하는 결과물 폴더 (기본값)
+/gallery/frontend/dist/
+
+# ------------------------------------
+# 3. 기타 캐시 및 로그 파일
+# ------------------------------------
+# 로그 파일
+*.log
+log/
+
+# OS 및 기타
+.DS_Store          # macOS
+Thumbs.db          # Windows
+/gallery/temp/     # 임시 폴더
