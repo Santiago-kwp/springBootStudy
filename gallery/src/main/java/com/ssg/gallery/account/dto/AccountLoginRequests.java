@@ -8,6 +8,5 @@ public class AccountLoginRequests {
 
   private String loginId;
   private String loginPw;
-  
 
 }

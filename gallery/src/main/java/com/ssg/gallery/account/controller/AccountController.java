@@ -36,7 +36,6 @@ public class AccountController {
   }
 
   // 로그인
-
   @PostMapping("/api/account/login")
   public ResponseEntity<?> login(HttpServletRequest request, HttpServletResponse response,
       @RequestBody AccountLoginRequests loginReq) {
@@ -64,7 +63,5 @@ public class AccountController {
     accountHelper.logout(request, response);
     return new ResponseEntity<>(HttpStatus.OK);
   }
-
-
 
 }

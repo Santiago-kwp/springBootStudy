@@ -6,7 +6,6 @@ import com.ssg.gallery.account.etc.AccountConstants;
 import com.ssg.gallery.common.util.HttpUtils;
 import com.ssg.gallery.member.entity.Member;
 import com.ssg.gallery.member.service.MemberService;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,7 @@ public class SessionAccountHelper implements AccountHelper{
       return null;
     }
     // 계정을 유지시켜주자 => 세션에 저장
-    HttpUtils.setSession(request, AccountConstants.Member_ID_NAME, member.getId());
+    HttpUtils.setSession(request, AccountConstants.MEMBER_ID_NAME, member.getId());
     return member.getLoginId();
   }
 
@@ -40,7 +39,7 @@ public class SessionAccountHelper implements AccountHelper{
   // 회원 아이디 조회
   @Override
   public Integer getMemberId(HttpServletRequest request) {
-    Object memberId = HttpUtils.getSession(request, AccountConstants.Member_ID_NAME);
+    Object memberId = HttpUtils.getSession(request, AccountConstants.MEMBER_ID_NAME);
     if (memberId != null) { return (int) memberId; }
     return null;
   }
@@ -54,6 +53,6 @@ public class SessionAccountHelper implements AccountHelper{
   // 로그아웃 처리 : 세션에서 제거
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response) {
-    HttpUtils.removeSession(request, AccountConstants.Member_ID_NAME);
+    HttpUtils.removeSession(request, AccountConstants.MEMBER_ID_NAME);
   }
 }

@@ -1,5 +1,18 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
+//계정 스토어 구현
+//frontend/src/stores/account.js
+import {defineStore} from 'pinia'
 
-// 계정 데이터를 다루는 계정 스토어
-export const useAccountStore = defineStore('account', {});
+export const useAccountStore = defineStore("account", { // ①
+  state: () => ({
+    checked: false, // ②
+    loggedIn: false, // ③
+  }),
+  actions: {
+    setChecked(val) { // ④
+      this.checked = val;
+    },
+    setLoggedIn(val) { // ⑤
+      this.loggedIn = val;
+    },
+  },
+});

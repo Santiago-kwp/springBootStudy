@@ -12,7 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 @Getter
 @Entity
-@Table
+@Table(name="members")
 public class Member {
 
   @Id

@@ -12,7 +12,4 @@ public class AccountJoinRequests {
   private String loginId;
   private String loginPw;
 
-
-
-
 }
