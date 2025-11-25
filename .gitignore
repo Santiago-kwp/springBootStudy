@@ -10,6 +10,7 @@
 /gallery/.idea/
 /gallery/*.iml
 /gallery/.settings/
+/gallery/node_modules/
 
 # 기타 빌드 부산물
 /gallery/bin/
@@ -20,6 +21,7 @@
 # gradlew, gradlew.bat 파일 자체는 포함시키고 싶다면 주석 처리
 # /gallery/gradlew
 # /gallery/gradlew.bat
+
 
 
 # ------------------------------------

@@ -1,0 +1,2 @@
+# package-lock.json을 항상 LF로 처리
+package-lock.json text eol=lf
