@@ -3,7 +3,6 @@ import {useAccountStore} from "@/stores/account";
 import {logout} from "@/services/accountService";
 import {ref,  computed} from "vue";
 import {useRouter} from "vue-router";
-// 💡 이미지 파일을 JavaScript 모듈로 import
 import logo from '@/assets/images/logoXL.png';
 const logoUrl = ref(logo);
 
@@ -15,12 +14,20 @@ const accountStore = useAccountStore(); // ①
 const router = useRouter(); // ②
 
 // 로그아웃
-const logoutAccount = async () => { // ③
-  const res = await logout();
+const logoutAccount = async () => {
 
+  const confirmed = window.confirm("정말로 로그아웃 하시겠습니까?");
+  if (!confirmed) {
+    return;
+  }
+
+  const res = await logout();
   if (res.status === 200) {
-    accountStore.setLoggedIn(false);
+    accountStore.setLoggedIn(false, null); // 로그아웃 시 user 정보를 null로 초기화
+    window.alert("성공적으로 로그아웃되었습니다.");
     await router.push("/");
+  } else {
+    window.alert("로그아웃 처리 중 오류가 발생했습니다.");
   }
 };
 

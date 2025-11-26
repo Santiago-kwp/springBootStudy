@@ -47,7 +47,7 @@ public class SessionAccountHelper implements AccountHelper{
   }
 
   @Override
-// 반환 타입을 MemberLogin DTO로 변경
+  // 반환 타입을 MemberLogin DTO로 변경
   public MemberLogin getLoginUser(HttpServletRequest request) {
     Integer memberId = getMemberId(request);
 

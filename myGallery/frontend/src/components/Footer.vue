@@ -32,9 +32,7 @@
 
         <h5 class="fw-bold mt-4">Follow Us</h5>
         <ul class="list-inline">
-          <li class="list-inline-item me-3"><a href="#" class="text-muted">Github</a></li>
-          <li class="list-inline-item me-3"><a href="#" class="text-muted">Blog</a></li>
-          <li class="list-inline-item"><a href="#" class="text-muted">Link</a></li>
+          <li class="list-inline-item me-3"><a href="https://github.com/Santiago-kwp/springBootStudy/tree/main/myGallery" target="_blank" class="text-muted">Github</a></li>
         </ul>
       </div>
     </div>

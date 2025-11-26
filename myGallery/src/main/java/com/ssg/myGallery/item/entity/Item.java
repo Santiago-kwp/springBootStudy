@@ -1,5 +1,6 @@
 package com.ssg.myGallery.item.entity;
 
+import com.ssg.myGallery.item.dto.ItemDetail;
 import com.ssg.myGallery.item.dto.ItemRead;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +28,12 @@ public class Item {
   @Column(length = 100, nullable = false)
   private String imgPath;
 
+  @Column(nullable = true)
+  private String summary;
+
+  @Column(nullable = true)
+  private String description;
+
   @Column(nullable = false)
   private Integer price;
 
@@ -46,7 +53,21 @@ public class Item {
         .name(name)
         .imgPath(imgPath)
         .price(price)
+        .summary(summary)
         .discountPer(discountPer).build();
+  }
+
+  // Item.java 엔티티에 추가
+  public ItemDetail toDetail() {
+    return ItemDetail.builder()
+        .id(id)
+        .name(name)
+        .imgPath(imgPath)
+        .price(price)
+        .discountPer(discountPer)
+        .summary(summary)
+        .description(description) // 💡 description 필드 추가
+        .build();
   }
 
 }
