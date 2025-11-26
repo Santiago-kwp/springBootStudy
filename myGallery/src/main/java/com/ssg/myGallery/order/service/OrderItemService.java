@@ -1,0 +1,13 @@
+package com.ssg.myGallery.order.service;
+
+import com.ssg.myGallery.order.entity.OrderItem;
+import java.util.List;
+
+public interface OrderItemService {
+  // 주문 ID로 주문 상품 목록 전체 조회
+  List<OrderItem> findAll(Integer orderId); // ①
+
+  // 주문 상품 데이터 저장
+  void saveAll(List<OrderItem> orderItems); // ②
+
+}

@@ -1,0 +1,23 @@
+package com.ssg.myGallery.order.dto;
+
+import com.ssg.myGallery.order.entity.Order;
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter // ①
+@Setter // ②
+public class OrderRequest {
+
+  private String name; // ③
+  private String address; // ④
+  private String payment; // ⑤
+  private String cardNumber; // ⑥
+  private Long amount; // ⑦
+  private List<Integer> itemIds; // ⑧
+
+  // 엔티티 객체로 변환
+  public Order toEntity(Integer memberId) { // ⑨
+    return new Order(memberId, name, address, payment, cardNumber, amount);
+  }
+}
