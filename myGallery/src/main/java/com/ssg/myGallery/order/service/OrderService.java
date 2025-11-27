@@ -3,10 +3,12 @@ package com.ssg.myGallery.order.service;
 import com.ssg.myGallery.order.dto.OrderRead;
 import com.ssg.myGallery.order.dto.OrderRequest;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
   // 회원 전체 주문 목록 조회
-  List<OrderRead> findAll(Integer memberId); // ①
+  Page<OrderRead> findAll(Integer memberId, Pageable pageable); // ①
 
   // 회원 주문 1건 상세 조회
   OrderRead find(Integer id, Integer memberId); // ②

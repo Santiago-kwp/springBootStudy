@@ -1,10 +1,20 @@
 <script setup>
   import { reactive, onMounted, computed } from 'vue';
-  import { useRoute } from 'vue-router';
-  import { getItem } from "@/services/itemService"; // 💡 상세 조회 API 호출 함수 (가정)
+  import { useRoute, useRouter } from 'vue-router';
+  import { getItem } from "@/services/itemService";
+  import { addItem } from "@/services/cartService.js"; // 💡 상세 조회 API 호출 함수 (가정)
+  import { useAccountStore } from "@/stores/account"; // 💡 Pinia 스토어 임포트
+  import { storeToRefs } from "pinia"; // pinia의 storeToRefs 임포트
+
+  // Pinia 스토어에서 loggedIn 상태 가져오기
+  const accountStore = useAccountStore();
+  const { loggedIn } = storeToRefs(accountStore); // loggedIn을 반응적으로 가져옴
 
   // 라우트 객체
   const route = useRoute();
+
+  const router = useRouter();
+
   // 현재 상품 ID
   const itemId = route.params.id;
 
@@ -40,10 +50,19 @@
 }
 };
 
+  // 장바구니에 상품 담기
+  const put = async () => { // ②
+    const res = await addItem(state.item.id);
+
+    if (res.status === 200 && window.confirm('장바구니에 상품을 담았습니다. 장바구니로 이동하시겠습니까?')) {
+      await router.push("/cart");
+    }
+  };
+
   // 컴포넌트가 마운트될 때 데이터 로딩 시작
   onMounted(() => {
   fetchItemDetail();
-});
+  });
 </script>
 
 <template>
@@ -73,7 +92,7 @@
 
           <div class="mb-5">
             <button class="btn btn-lg btn-primary me-2">바로 구매</button>
-            <button class="btn btn-lg btn-outline-secondary">장바구니 담기</button>
+            <button v-if="loggedIn" class="btn btn-lg btn-outline-secondary" @click="put()">🛒장바구니 담기</button>
           </div>
 
           <h4 class="mb-3 border-bottom pb-2">작품 해설 및 스토리 📜</h4>

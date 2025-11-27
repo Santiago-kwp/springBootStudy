@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +29,9 @@ public class BaseOrderService implements OrderService{
 
   // 회원의 주문 전체 목록 조회
   @Override
-  public List<OrderRead> findAll(Integer memberId) {
-    return orderRepository.findAllByMemberIdOrderByIdDesc(memberId).stream().map(Order::toRead).toList();
+  public Page<OrderRead> findAll(Integer memberId, Pageable pageable) {
+    Page<Order> orders = orderRepository.findAllByMemberIdOrderByIdDesc(memberId, pageable);
+    return orders.map(Order::toRead);
   }
 
   // 회원의 주문 내역 단건 상세 조회
