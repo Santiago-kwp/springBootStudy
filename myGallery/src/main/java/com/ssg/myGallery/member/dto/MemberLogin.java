@@ -1,19 +1,18 @@
 package com.ssg.myGallery.member.dto;
 
-import com.ssg.myGallery.member.entity.Member;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class MemberLogin {
-  private Integer id;
-  private String name;
-  private String loginId;
+  private final Integer id;
+  private final String name;
+  private final String loginId;
+  // JWT 액세스 토큰을 담을 속성 추가
+  private final String accessToken;
 
-  public MemberLogin(Member member) {
-    this.id = member.getId();
-    this.name = member.getName();
-    this.loginId = member.getLoginId();
-  }
 }

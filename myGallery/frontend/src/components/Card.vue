@@ -41,8 +41,11 @@ const put = async () => { // ②
 <template>
   <div class="card shadow-sm">
     <!-- 상품 사진 출력 -->
-    <span class="img" :style="{backgroundImage: `url(${props.item.imgPath})`}"
-          :aria-label="`상품 사진(${props.item.name})`"></span>
+    <router-link :to="{ name: 'ItemDetail', params: { id: props.item.id } }">
+      <span class="img" :style="{backgroundImage: `url(${props.item.imgPath})`}"
+            :aria-label="`상품 사진(${props.item.name})`"></span>
+    </router-link>
+
     <div class="card-body">
       <p class="card-text">
         <!-- 상품 이름 -->
@@ -86,10 +89,10 @@ const put = async () => { // ②
   }
   /* 💡 요약문(Summary) 스타일링 */
   .card-summary {
-    font-size: 0.9em; /* 텍스트 크기 약간 줄이기 */
-    line-height: 1.4; /* 줄 간격 설정 */
-    height: 40px; /* 요약문 영역의 높이를 고정하여 카드의 높이 통일 */
-    overflow: hidden; /* 혹시 모를 오버플로우 방지 */
+    font-size: 0.9em;
+    font-family: 'Noto Serif KR', serif;
+    line-height: 1.4;
+    overflow: hidden;
     color: #555 !important;
   }
 }

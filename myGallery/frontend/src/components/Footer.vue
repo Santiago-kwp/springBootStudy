@@ -19,8 +19,8 @@
         <ul class="list-unstyled">
           <li><router-link to="/" class="text-muted text-decoration-none">갤러리 메인</router-link></li>
           <li><router-link to="/cart" class="text-muted text-decoration-none">장바구니</router-link></li>
-          <li><router-link to="/my-page" class="text-muted text-decoration-none">마이페이지</router-link></li>
-          <li><router-link to="/policy" class="text-muted text-decoration-none">이용약관</router-link></li>
+          <li><router-link to="#" class="text-muted text-decoration-none">마이페이지</router-link></li>
+          <li><router-link to="#" class="text-muted text-decoration-none">이용약관</router-link></li>
         </ul>
       </div>
 

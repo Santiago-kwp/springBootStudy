@@ -8,6 +8,7 @@ import com.ssg.myGallery.order.dto.OrderRequest;
 import com.ssg.myGallery.order.entity.Order;
 import com.ssg.myGallery.order.entity.OrderItem;
 import com.ssg.myGallery.order.repository.OrderRepository;
+import com.ssg.myGallery.util.EncryptionUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,11 @@ public class BaseOrderService implements OrderService{
 
     // 주문 요청에 최종 결제 금액 입력
     orderReq.setAmount(amount);
+
+    // 결제 수단이 카드일 때 카드 번호 암호화
+    if ("card".equals(orderReq.getPayment())) {
+      orderReq.setCardNumber(EncryptionUtils.encrypt(orderReq.getCardNumber()));
+    }
 
     // 주문 저장
     Order order = orderRepository.save(orderReq.toEntity(memberId));

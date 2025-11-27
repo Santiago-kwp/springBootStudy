@@ -26,7 +26,7 @@ public class ItemController {
   }
 
   // 상품 상세 조회
-  @GetMapping("/api/item/{id}")
+  @GetMapping("/api/items/{id}")
   public ResponseEntity<ItemDetail> getItemDetail(@PathVariable int id) {
     
     ItemDetail itemDetail = itemService.findById(id);

@@ -34,7 +34,11 @@ public class SessionAccountHelper implements AccountHelper{
     // 계정을 유지시켜주자 => 세션에 저장
     HttpUtils.setSession(request, AccountConstants.MEMBER_ID_NAME, member.getId());
     // DTO 객체를 생성하여 반환
-    return new MemberLogin(member);
+    return MemberLogin.builder()
+        .id(member.getId())
+        .loginId(member.getLoginId())
+        .name(member.getName())
+        .build();
   }
 
 
@@ -65,7 +69,11 @@ public class SessionAccountHelper implements AccountHelper{
     }
 
     // 💡 2. 조회된 Member 엔티티를 DTO로 변환하여 반환합니다.
-    return new MemberLogin(member);
+    return MemberLogin.builder()
+        .id(member.getId())
+        .loginId(member.getLoginId())
+        .name(member.getName())
+        .build();
   }
 
 

@@ -38,6 +38,11 @@ const router = createRouter({
       name: 'orderDetail',
       component: () => import('../views/OrderDetail.vue')
     },
+    {
+      path: '/item/:id', // 💡 ID를 파라미터로 받습니다.
+      name: 'ItemDetail',
+      component: () => import('../views/ItemDetail.vue')
+    }
   ]
 })
 

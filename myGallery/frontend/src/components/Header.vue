@@ -3,7 +3,7 @@ import {useAccountStore} from "@/stores/account";
 import {logout} from "@/services/accountService";
 import {ref,  computed} from "vue";
 import {useRouter} from "vue-router";
-import logo from '@/assets/images/logoXL.png';
+import logo from '@/assets/images/logo.png';
 const logoUrl = ref(logo);
 
 
@@ -24,6 +24,7 @@ const logoutAccount = async () => {
   const res = await logout();
   if (res.status === 200) {
     accountStore.setLoggedIn(false, null); // 로그아웃 시 user 정보를 null로 초기화
+    accountStore.setAccessToken(""); // ① 로그 아웃을 위한 메서드 수정, 로그 아웃 성공시 계정 스토어의 액세스 토큰 값을 초기화하여 이후 HTTP 요청에서 토큰이 사용되지 않도록
     window.alert("성공적으로 로그아웃되었습니다.");
     await router.push("/");
   } else {
