@@ -51,4 +51,13 @@ public class BaseMemberService implements MemberService{
     Optional<Member> member =  memberRepository.findById(id);
     return member.orElse(null);
   }
+
+   public boolean isLoginIdExists(String loginId) {
+     return memberRepository.existsByLoginId(loginId);
+   }
+
+   public Optional<Member> findByLoginId(String loginId) {
+    return memberRepository.findByLoginId(loginId);
+   }
+
 }

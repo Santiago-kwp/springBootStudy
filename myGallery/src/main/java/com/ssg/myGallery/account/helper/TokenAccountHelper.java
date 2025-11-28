@@ -6,6 +6,9 @@ import com.ssg.myGallery.account.etc.AccountConstants;
 import com.ssg.myGallery.block.service.BlockService;
 import com.ssg.myGallery.common.util.HttpUtils;
 import com.ssg.myGallery.common.util.TokenUtils;
+import com.ssg.myGallery.exception.AccountNotFoundException;
+import com.ssg.myGallery.exception.InvalidPasswordException;
+import com.ssg.myGallery.exception.LoginIdDuplicateException;
 import com.ssg.myGallery.member.dto.MemberLogin;
 import com.ssg.myGallery.member.entity.Member;
 import com.ssg.myGallery.member.service.MemberService;
@@ -50,18 +53,30 @@ public class TokenAccountHelper implements AccountHelper {
   // 회원가입
   @Override
   public void join(AccountJoinRequests joinReq) { // ⑨
+
+    // 1. 이메일(loginId) 중복 검사
+    if (memberService.isLoginIdExists(joinReq.getLoginId())) {
+      // 중복된 경우, 409 Conflict를 유발할 커스텀 예외 발생
+      throw new LoginIdDuplicateException("이미 사용 중인 이메일(loginId)입니다: " + joinReq.getLoginId());
+    }
+
+    // 2. 중복이 아니면 저장 처리
     memberService.save(joinReq.getName(), joinReq.getLoginId(), joinReq.getLoginPw());
   }
 
   // 로그인
   @Override
   public MemberLogin login(AccountLoginRequests loginReq, HttpServletRequest req, HttpServletResponse res) { // ⑨
-    Member member = memberService.find(loginReq.getLoginId(), loginReq.getLoginPw());
 
-    // 회원 데이터가 없으면
-    if (member == null) {
-      return null;
-    }
+    // 1. 회원 ID로 회원 정보 조회 (MemberService 이용)
+    Member member = memberService.findByLoginId(loginReq.getLoginId())
+        .orElseThrow(() -> new AccountNotFoundException("존재하지 않는 회원 ID입니다.")); // 404 대응
+
+    // 2. 비밀번호 일치 검증
+    // 암호화된 비밀번호와 입력된 비밀번호를 비교
+//    if (!passwordEncoder.matches(loginReq.getLoginPw(), member.getLoginPw())) {
+//      throw new InvalidPasswordException("비밀번호가 일치하지 않습니다."); // 401 대응
+//    }
 
     // 회원 아이디
     Integer memberId = member.getId();
@@ -102,8 +117,6 @@ public class TokenAccountHelper implements AccountHelper {
 
     // 리프레시 토큰 조회
     String refreshToken = getRefreshToken(req);
-
-    log.info("here??!! ----- 조회 "+ (TokenUtils.isValid(refreshToken) && !blockService.has(refreshToken)));
 
     // 리프레시 토큰의 유효성 확인
     return TokenUtils.isValid(refreshToken) && !blockService.has(refreshToken);

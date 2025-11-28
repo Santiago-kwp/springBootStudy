@@ -7,11 +7,15 @@ import com.ssg.myGallery.account.helper.AccountHelper;
 import com.ssg.myGallery.block.service.BlockService;
 import com.ssg.myGallery.common.util.HttpUtils;
 import com.ssg.myGallery.common.util.TokenUtils;
+import com.ssg.myGallery.exception.AccountNotFoundException;
+import com.ssg.myGallery.exception.InvalidPasswordException;
+import com.ssg.myGallery.exception.LoginIdDuplicateException;
 import com.ssg.myGallery.member.dto.MemberLogin;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Log4j2
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1") // 모든 HTTP 메소드의 요청을 매핑하기 위한 애너테이션
@@ -29,31 +34,64 @@ public class AccountController {
   private final AccountHelper accountHelper;
   private final BlockService blockService; // ① 스프링 컨테이너에 의해 의존성 주입될 토큰 차단 서비스 필드
 
+  // 이메일 형식 검증을 위한 정규표현식 (간단 버전)
+  private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
   @PostMapping("/api/account/join")
   public ResponseEntity<?> join(@RequestBody AccountJoinRequests joinReq) {
-    // 입력 값이 비어 있다면
-    if (!StringUtils.hasLength(joinReq.getName()) || !StringUtils.hasLength(joinReq.getLoginId()) || !StringUtils.hasLength(joinReq.getLoginPw())) {
+
+    // 1. 입력 값 길이 검증
+    if (!StringUtils.hasLength(joinReq.getName())
+        || !StringUtils.hasLength(joinReq.getLoginId())
+        || !StringUtils.hasLength(joinReq.getLoginPw())) {
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    accountHelper.join(joinReq);
-    return new ResponseEntity<>(HttpStatus.OK);
+    // 2. 이메일 형식 검증 (정규표현식)
+    if (!joinReq.getLoginId().matches(EMAIL_REGEX)) {
+      // 유효하지 않은 이메일 형식이라면 400 Bad Request 반환
+      return new ResponseEntity<>("유효하지 않은 이메일 형식입니다.", HttpStatus.BAD_REQUEST);
+    }
+
+
+    try {
+      // 3. 회원가입 로직 실행 (내부에 중복 검증 포함)
+      accountHelper.join(joinReq);
+      return new ResponseEntity<>(HttpStatus.OK);
+    } catch (LoginIdDuplicateException e) {
+      // 4. LoginIdDuplicateException 발생 시 409 Conflict 반환
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT); // 409
+    }
   }
 
   @PostMapping("/api/account/login")
   public ResponseEntity<?> login(HttpServletRequest req, HttpServletResponse res, @RequestBody AccountLoginRequests loginReq) {
-    // 입력 값이 비어 있다면
-    if (!StringUtils.hasLength(loginReq.getLoginId()) || !StringUtils.hasLength(loginReq.getLoginPw())) {
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    // 1. 입력 값 존재 및 길이 검증
+    if (!StringUtils.hasLength(loginReq.getLoginId())
+        || !StringUtils.hasLength(loginReq.getLoginPw())) {
+      return new ResponseEntity<>("아이디와 비밀번호를 모두 입력해야 합니다.", HttpStatus.BAD_REQUEST);
     }
 
-    MemberLogin output = accountHelper.login(loginReq, req, res);
-
-    if (output == null) { // 로그인 실패 시
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    // 2. 이메일 형식 검증 (정규표현식)
+    if (!loginReq.getLoginId().matches(EMAIL_REGEX)) {
+      return new ResponseEntity<>("유효하지 않은 이메일 형식입니다.", HttpStatus.BAD_REQUEST);
     }
 
-    return new ResponseEntity<>(output, HttpStatus.OK);
+    try {
+      MemberLogin output = accountHelper.login(loginReq, req, res);
+      return new ResponseEntity<>(output, HttpStatus.OK); // 200 OK
+
+    } catch (AccountNotFoundException e) { // 아이디 존재 안함 : 404 Not Found
+      log.warn("Login failed: Account not found for loginId: {}", loginReq.getLoginId());
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+
+    } catch (InvalidPasswordException e) { // 비밀번호 틀린 경우 : 401 UnAuthorized
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+
+    } catch (Exception e) { // 그 외 예상치 못한 서버 오류
+      log.error("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
+      return new ResponseEntity<>("로그인 처리 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR); // 500
+    }
   }
 
   @GetMapping("/api/account/check")

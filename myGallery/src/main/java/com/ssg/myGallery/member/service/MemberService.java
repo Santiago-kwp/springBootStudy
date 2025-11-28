@@ -1,6 +1,7 @@
 package com.ssg.myGallery.member.service;
 
 import com.ssg.myGallery.member.entity.Member;
+import java.util.Optional;
 
 public interface MemberService {
 
@@ -12,5 +13,9 @@ public interface MemberService {
 
 
   Member findById(Integer id);
+
+  boolean isLoginIdExists(String loginId);
+
+  Optional<Member> findByLoginId(String loginId);
 
 }
