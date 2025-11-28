@@ -82,14 +82,14 @@ public class AccountController {
       return new ResponseEntity<>(output, HttpStatus.OK); // 200 OK
 
     } catch (AccountNotFoundException e) { // 아이디 존재 안함 : 404 Not Found
-      log.warn("Login failed: Account not found for loginId: {}", loginReq.getLoginId());
+      log.info("Login failed: Account not found for loginId: {}", loginReq.getLoginId());
       return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
 
     } catch (InvalidPasswordException e) { // 비밀번호 틀린 경우 : 401 UnAuthorized
       return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
 
     } catch (Exception e) { // 그 외 예상치 못한 서버 오류
-      log.error("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
+      log.info("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
       return new ResponseEntity<>("로그인 처리 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR); // 500
     }
   }
