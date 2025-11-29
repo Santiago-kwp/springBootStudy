@@ -72,7 +72,9 @@ const submit = async () => {
       window.alert("로그인에 성공했습니다.")
       accountStore.setLoggedIn(true,  res.data);// ③ 로그인 성공시 응답받은 데이터(액세스 토큰 제외)를 저장
       accountStore.setAccessToken(res.data.accessToken); // 토큰을 별도 저장
-      await router.push("/");
+      await router.push({
+        name: 'landingPage'
+      });
       break;
 
     case 404: // 아이디 존재 여부 검증 (회원 정보 없음)

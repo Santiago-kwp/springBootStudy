@@ -44,11 +44,11 @@ watch(() => route.path, () => {
 <template>
   <!-- 로그인 체크 여부 확인 후 출력-->
   <template v-if="accountStore.checked"> <!-- ③ -->
-    <Header/>
+    <Header v-if="!route.meta.hideHeader" />
     <main>
       <!-- 라우터 뷰 -->
       <router-view></router-view>
     </main>
-    <Footer/>
+    <Footer v-if="!route.meta.hideFooter" />
   </template>
 </template>

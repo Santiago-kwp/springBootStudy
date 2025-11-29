@@ -126,7 +126,7 @@
       </div>
 
       <div class="text-center mt-5">
-        <router-link to="/" class="btn btn-outline-dark">갤러리 목록으로 돌아가기</router-link>
+        <router-link :to="{ name: 'home' }" class="btn btn-outline-dark">갤러리 목록으로 돌아가기</router-link>
       </div>
 
     </div>

@@ -101,7 +101,7 @@ const navigateToOrder = () => {
           <button class="btn btn-primary" @click="navigateToOrder">선택 상품 주문하기</button>
         </div>
         <div class="d-flex justify-content-end">
-          <router-link to="/" class="btn btn-secondary">갤러리 이동</router-link>
+          <router-link :to="{ name: 'home' }" class="btn btn-secondary">갤러리 이동</router-link>
         </div>
       </template>
       <div class="text-center py-5" v-else>장바구니가 비어있습니다.</div>

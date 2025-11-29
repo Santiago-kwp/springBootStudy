@@ -47,7 +47,7 @@ const welcomeMessage = computed(() => {
   <header class="main-header">
     <div class="navbar text-white">
       <div class="container">
-        <router-link to="/" class="navbar-brand">
+        <router-link :to="{name: 'home'}" class="navbar-brand">
           <strong><img :src="logoUrl" alt="내 로고" class="header-logo"/>Climb Gallery</strong>
         </router-link>
         <div class="menus d-flex gap-4">
