@@ -14,7 +14,8 @@ instance.interceptors.response.use((res) => {
 }, async (err) => {
   switch (err.response.status) {
     case 400:
-      window.alert("잘못된 요청입니다.");
+      // 400번의 경우 기능별로 알아서 처리하도록 함.
+      // window.alert("잘못된 요청입니다.");
       break;
 
     case 401: // ② HTTP 응답코드가 401 이라면 액세스 토큰이 만료된 것일 수 있으므로 쿠키에 있는 리프레시 토큰으로 액세스 토큰을 다시 요청한다.

@@ -57,7 +57,7 @@ const submit = async () => {
   }
 
   // 2. 비밀번호 입력 검증
-  if (state.form.loginPw?.trim()) {
+  if (!state.form.loginPw?.trim()) {
     window.alert(state.errors.loginPw);
     document.getElementById("loginPw")?.focus();
     return;
@@ -81,14 +81,10 @@ const submit = async () => {
       document.getElementById("loginId")?.focus();
       break;
 
-    case 401: // 비밀번호 불일치 검증 (인증 실패)
+    case 400: // 비밀번호 불일치 검증 (사용자의 잘못된 요청으로 처리)
       window.alert("비밀번호가 일치하지 않습니다.");
       state.errors.loginPw = "비밀번호가 일치하지 않습니다."; // 에러 메시지 업데이트
       document.getElementById("loginPw")?.focus();
-      break;
-
-    case 400: // 기타 형식 오류 등
-      window.alert("잘못된 요청 형식입니다. 입력 정보를 확인해주세요.");
       break;
 
     default: // 기타 서버 오류

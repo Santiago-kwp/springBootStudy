@@ -68,15 +68,14 @@ public class TokenAccountHelper implements AccountHelper {
   @Override
   public MemberLogin login(AccountLoginRequests loginReq, HttpServletRequest req, HttpServletResponse res) { // ⑨
 
-    // 1. 회원 ID로 회원 정보 조회 (MemberService 이용)
+    // 1. 회원 ID로 회원 정보 조회
     Member member = memberService.findByLoginId(loginReq.getLoginId())
         .orElseThrow(() -> new AccountNotFoundException("존재하지 않는 회원 ID입니다.")); // 404 대응
 
     // 2. 비밀번호 일치 검증
-    // 암호화된 비밀번호와 입력된 비밀번호를 비교
-//    if (!passwordEncoder.matches(loginReq.getLoginPw(), member.getLoginPw())) {
-//      throw new InvalidPasswordException("비밀번호가 일치하지 않습니다."); // 401 대응
-//    }
+    if (memberService.find(loginReq.getLoginId(), loginReq.getLoginPw()) == null) {
+      throw new InvalidPasswordException("비밀번호가 일치하지 않습니다.");
+    }
 
     // 회원 아이디
     Integer memberId = member.getId();

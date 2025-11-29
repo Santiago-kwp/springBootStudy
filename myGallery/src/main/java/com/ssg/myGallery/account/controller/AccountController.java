@@ -85,8 +85,8 @@ public class AccountController {
       log.info("Login failed: Account not found for loginId: {}", loginReq.getLoginId());
       return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
 
-    } catch (InvalidPasswordException e) { // 비밀번호 틀린 경우 : 401 UnAuthorized
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+    } catch (InvalidPasswordException e) { // 비밀번호 틀린 경우 : 400 Bad Request
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 
     } catch (Exception e) { // 그 외 예상치 못한 서버 오류
       log.info("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
