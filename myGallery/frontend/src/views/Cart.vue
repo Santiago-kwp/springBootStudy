@@ -63,7 +63,7 @@ const navigateToOrder = () => {
   // 선택된 ID 목록을 쿼리 파라미터로 '/order' 페이지에 전달합니다.
   // 예: /order?itemIds=101,102
   router.push({
-    path: '/order',
+    name: 'orderForm',
     query: {
       itemIds: checkedIds.join(',')
     }

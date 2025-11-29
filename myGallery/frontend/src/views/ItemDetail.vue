@@ -59,6 +59,20 @@
     }
   };
 
+  // 하나의 상품 바로 구매하는 페이지 이동하기
+  const addOrder = async() => {
+    window.confirm('해당 상품을 바로 주문하시겠습니까?');
+
+    const singleItemId = [state.item.id];
+
+    await router.push({
+      name: 'orderForm',
+      query: {
+        itemIds: singleItemId.join(',') // (cart.vue와 동일 형식)
+      }
+    });
+  }
+
   // 컴포넌트가 마운트될 때 데이터 로딩 시작
   onMounted(() => {
   fetchItemDetail();
@@ -91,7 +105,7 @@
           </div>
 
           <div class="mb-5">
-            <button class="btn btn-lg btn-primary me-2">바로 구매</button>
+            <button v-if="loggedIn" class="btn btn-lg btn-primary me-2" @click="addOrder()">바로 구매</button>
             <button v-if="loggedIn" class="btn btn-lg btn-outline-secondary" @click="put()">🛒장바구니 담기</button>
           </div>
 

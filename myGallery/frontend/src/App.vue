@@ -28,17 +28,6 @@ const checkAccount = async () => { // ②
   // 2. 💡 인증 체크 완료를 알림: 요청 성공/실패와 관계없이 체크는 완료됨.
   accountStore.setChecked(true);
 
-  // if (res.status === 200) {
-  //   accountStore.setChecked(true); // 로그인여부 체크했으면 true
-  //   if (res.data === true) { // 토큰 유효성 검사
-  //     accountStore.setLoggedIn(true, accountStore.user);
-  //   } else {
-  //     accountStore.setLoggedIn(false, null);
-  //   }
-  // } else {
-  //   accountStore.setChecked(false);
-  //   accountStore.setLoggedIn(false, null);
-  // }
 };
 
 // 커스텀 생성 훅 : checkAccount()를 수행한 후 onCreated()를 수행하라(즉, 화면 렌더링해라)

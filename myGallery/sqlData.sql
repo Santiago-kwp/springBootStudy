@@ -60,12 +60,14 @@ select * from items;
 drop table if exists members;
 
 create table members(
-                        id int primary key auto_increment,
-                        name varchar(50) not null,
-                        login_id varchar(50) unique not null,
-                        login_pw varchar(44) not null,
-                        login_pw_salt char(16) NOT NULL comment '로그인 패스워드 솔트',
-                        created datetime default current_timestamp() not null
+id int primary key auto_increment,
+name varchar(50) not null,
+login_id varchar(50) unique not null,
+login_pw varchar(44) not null,
+login_pw_salt char(16) NOT NULL comment '로그인 패스워드 솔트',
+phone_number varchar(20) null comment '주요 연락처',
+created datetime default current_timestamp() not null,
+updated datetime not null default current_timestamp ON UPDATE current_timestamp
 );
 
 select * from members;
@@ -117,6 +119,30 @@ create table blocks (
                         token   varchar(250)                         not null comment '차단 토큰',
                         created datetime default current_timestamp() not null comment '생성 일시'
 ) comment '토큰 차단';
+
+
+-- 테이블 드롭 (테스트용, 기존 테이블이 있다면)
+-- DROP TABLE IF EXISTS user_addresses;
+
+CREATE TABLE user_addresses (
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+user_id INT NOT NULL COMMENT '회원 ID',
+alias VARCHAR(50) NOT NULL COMMENT '주소 별칭 (예: 집, 회사)',
+recipient_name VARCHAR(50) COMMENT '수령인 이름',
+recipient_phone VARCHAR(20) COMMENT '수령인 연락처',
+zip_code VARCHAR(10) NOT NULL COMMENT '우편 번호',
+base_address VARCHAR(255) NOT NULL COMMENT '기본 주소 (도로명 또는 지번)',
+detail_address VARCHAR(255) COMMENT '상세 주소 (동, 호수)',
+is_default BOOLEAN NOT NULL DEFAULT FALSE COMMENT '기본 배송지 여부',
+
+FOREIGN KEY (user_id)
+    REFERENCES members(id)
+    ON DELETE CASCADE, -- 회원이 삭제되면 등록된 주소도 함께 삭제 (CASCADE)
+
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) COMMENT '회원 배송지 목록 테이블';
+
+CREATE INDEX idx_user_default_address ON user_addresses (user_id, is_default);
 
 select * from orders;
 select * from order_items;

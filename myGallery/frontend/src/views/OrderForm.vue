@@ -3,9 +3,10 @@ import {computed, reactive} from "vue";
 import {addOrder} from "@/services/orderService";
 import {useRoute,  useRouter} from "vue-router";
 import {getItems} from "@/services/cartService";
+import {useAccountStore} from "@/stores/account";
 
 const route = useRoute(); // useRoute 임포트 및 사용
-
+const accountStore = useAccountStore();
 // 라우터 객체
 const router = useRouter(); // ①
 
@@ -13,7 +14,7 @@ const router = useRouter(); // ①
 const state = reactive({ // ②
   items: [],
   form: {
-    name: "",
+    name: accountStore.user.name,
     address: "",
     payment: "card",
     cardNumber: "",

@@ -124,7 +124,7 @@ const submit = async () => {
         </div>
         <div class="form-floating">
           <input type="email" class="form-control" id="loginId" placeholder="이메일" v-model="state.form.loginId" @blur="validateEmail"> <!-- ⑥ -->
-          <label for="loginId">이메일</label>
+          <label for="loginId">이메일(로그인 아이디)</label>
           <div v-if="state.errors.loginId" class="text-danger small mt-1">{{ state.errors.loginId }}</div>
         </div>
         <div class="form-floating">
