@@ -4,7 +4,8 @@
   import { getItem } from "@/services/itemService";
   import { addItem } from "@/services/cartService.js"; // 💡 상세 조회 API 호출 함수 (가정)
   import { useAccountStore } from "@/stores/account"; // 💡 Pinia 스토어 임포트
-  import { storeToRefs } from "pinia"; // pinia의 storeToRefs 임포트
+  import { storeToRefs } from "pinia"; // pinia의 storeToRefs 임포트'
+  import { marked } from 'marked'; // 1. 라이브러리 임포트
 
   // Pinia 스토어에서 loggedIn 상태 가져오기
   const accountStore = useAccountStore();
@@ -49,6 +50,16 @@
   state.loading = false;
 }
 };
+
+  // 2. description을 HTML로 변환하는 computed 속성 생성
+  const renderedDescription = computed(() => {
+    // state.item.description이 존재할 때만 변환 실행
+    if (state.item.description) {
+      // marked(마크다운 텍스트)를 호출하여 HTML 문자열을 얻습니다.
+      return marked.parse(state.item.description);
+    }
+    return '';
+  });
 
   // 장바구니에 상품 담기
   const put = async () => { // ②
@@ -110,8 +121,7 @@
           </div>
 
           <h4 class="mb-3 border-bottom pb-2">작품 해설 및 스토리 📜</h4>
-          <p class="description-text lead text-break">{{ state.item.description }}</p>
-
+          <p v-html="renderedDescription" class="description-text lead text-break"></p>
         </div>
       </div>
 

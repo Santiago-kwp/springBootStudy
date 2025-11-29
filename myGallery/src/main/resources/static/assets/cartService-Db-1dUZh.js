@@ -1,0 +1,1 @@
+import{A as t}from"./index-CAEnLQrx.js";const a=()=>t.get("/v1/api/cart/items").catch(e=>e.response),c=e=>t.post("/v1/api/carts",{itemId:e}).catch(s=>s.response),o=e=>t.delete(`/v1/api/cart/items/${e}`).catch(s=>s.response),n=()=>t.delete("/v1/api/cart/items").catch(e=>e.response);export{c as a,o as b,a as g,n as r};
