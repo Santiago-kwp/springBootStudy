@@ -18,5 +18,5 @@ public interface ItemService {
   // 상품 하나 상세 조회
   ItemDetail findById(Integer id);
 
-
+  List<ItemRead> findItemsByIds(List<Integer> itemIds);
 }

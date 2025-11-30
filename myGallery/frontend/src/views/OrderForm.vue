@@ -3,7 +3,7 @@ import {computed, reactive} from "vue";
 import {addOrder} from "@/services/orderService";
 import {useRoute,  useRouter} from "vue-router";
 // import {getItems} from "@/services/cartService"; // 카트에서 상품 목록 조회..
-import {getItems} from "@/services/itemService"; // 아이템 서비스에서 상품 목록 조회로 임시 변경
+import {getItemList} from "@/services/itemService"; // 아이템 서비스에서 상품 목록 조회로 임시 변경
 import {useAccountStore} from "@/stores/account";
 
 const route = useRoute(); // useRoute 임포트 및 사용
@@ -69,9 +69,9 @@ const submit = async () => { // ④
     return;
   }
 
-  const res = await getItems(); // 임시로 전체를 가져온 후 필터링 => 여기서 getItems는 itemService의 getItems가 아니라 cartService의 getItems 였음.. ㅠㅠ
+  const res = await getItemList(selectedItemIds); // 임시로 전체를 가져온 후 필터링 => 여기서 getItems는 itemService의 getItems가 아니라 cartService의 getItems 였음.. ㅠㅠ
   if (res.status === 200) {
-    state.items = res.data.filter(item => selectedItemIds.includes(String(item.id)));
+    state.items = res.data;
   }
 })();
 </script>

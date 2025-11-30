@@ -34,4 +34,9 @@ public class BaseItemService implements ItemService{
     Optional<ItemDetail> itemDetail = itemRepository.findById(id).map(Item::toDetail);
     return itemDetail.orElse(null);
   }
+
+  @Override
+  public List<ItemRead> findItemsByIds(List<Integer> itemIds) {
+    return itemRepository.findAllById(itemIds).stream().map(Item::toRead).toList();
+  }
 }

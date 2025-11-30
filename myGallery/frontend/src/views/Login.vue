@@ -73,7 +73,7 @@ const submit = async () => {
       accountStore.setLoggedIn(true,  res.data);// ③ 로그인 성공시 응답받은 데이터(액세스 토큰 제외)를 저장
       accountStore.setAccessToken(res.data.accessToken); // 토큰을 별도 저장
       await router.push({
-        name: 'landingPage'
+        name: 'home'
       });
       break;
 

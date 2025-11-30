@@ -17,3 +17,11 @@ export const getItem = (id) => {
   return httpRequester.get(`/v1/api/items/${id}`).catch(e=> e.response);
 }
 
+
+// 상품 하나 이상을 아이디 리스트로 조회
+export const getItemList = (itemIds) => {
+    const idsString = Array.isArray(itemIds) ? itemIds.join(',') : String(itemIds);
+    return httpRequester.get(`/v1/api/itemList`, { itemIds: idsString })
+        .catch(e => e.response);
+}
+

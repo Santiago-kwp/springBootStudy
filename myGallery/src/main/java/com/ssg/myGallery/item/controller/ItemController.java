@@ -9,10 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1")
@@ -32,6 +29,18 @@ public class ItemController {
     
     ItemDetail itemDetail = itemService.findById(id);
     return new ResponseEntity<>(itemDetail, HttpStatus.OK);
+  }
+
+  @GetMapping("/api/itemList")
+  public ResponseEntity<List<ItemRead>> getItemList(@RequestParam List<Integer> itemIds) {
+
+    List<ItemRead> items = itemService.findItemsByIds(itemIds);
+
+    if (items.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    return ResponseEntity.ok(items);
   }
 
 
