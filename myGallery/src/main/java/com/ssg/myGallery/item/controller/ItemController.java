@@ -5,6 +5,8 @@ import com.ssg.myGallery.item.dto.ItemRead;
 import com.ssg.myGallery.item.service.ItemService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +22,8 @@ public class ItemController {
   private final ItemService itemService;
 
   @GetMapping("/api/items")
-  public ResponseEntity<?> readAll(){
-    List<ItemRead> items = itemService.findAll();
-    return new ResponseEntity<>(items, HttpStatus.OK);
+  public Page<ItemRead> getItems(Pageable pageable) {
+    return itemService.findAll(pageable);
   }
 
   // 상품 상세 조회

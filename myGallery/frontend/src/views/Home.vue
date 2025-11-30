@@ -1,21 +1,74 @@
 <script setup>
 import {getItems} from "@/services/itemService";
-import {reactive} from "vue";
+import {reactive, onMounted, onUnmounted, ref} from "vue"; // 💡 onMounted, onUnmounted, ref 추가
 import Card from "@/components/Card.vue";
 
 // 반응형 상태
-const state = reactive({ // ① 반응형상태, 내부에 상품 목록을 저장할 items 배열, 해당 배열에 데이터가 추가되거나, 삭제되면 자동으로 UI에 반영된다.
-  items: []
+// 💡 1. 페이지네이션 상태 관리
+const state = reactive({
+  items: [],
+  args: {
+    page: 0,
+    size: 8
+  },
+  isLast: false, // 마지막 페이지인지 여부
+  isLoading: false, // 로딩 상태 플래그
 });
 
-// 커스텀 생성 훅
-(async function onCreated() { // ② 상품서비스의 상품목록을 조회하는 getItems() 호출하고 리턴 데이터를 state.items에 입력한다.
-  const res = await getItems();
+// 💡 2. 데이터 로드 함수 정의
+const loadItems = async () => {
+  // 이미 로딩 중이거나 마지막 페이지라면 추가 로드 방지
+  if (state.isLoading || state.isLast) return;
 
-  if (res.status === 200) {
-    state.items = res.data;
+  state.isLoading = true; // 로딩 시작
+
+  try {
+    const res = await getItems(state.args);
+
+    if (res.status === 200) {
+
+      const newItems = res.data.content;
+      state.items.push(...newItems);
+
+      state.isLast = res.data.last;
+      state.args.page++; // 다음 페이지 번호 준비
+    }
+  } catch (error) {
+    console.error("상품 로드 중 오류 발생:", error);
+  } finally {
+    state.isLoading = false; // 로딩 완료
   }
-})();
+};
+
+// 💡 4. 스크롤 이벤트 리스너 정의
+const handleScroll = () => {
+  // 문서의 전체 높이
+  const documentHeight = document.documentElement.scrollHeight;
+  // 현재 스크롤 위치 (뷰포트 상단에서 문서 상단까지의 거리)
+  const scrollTop = document.documentElement.scrollTop;
+  // 뷰포트의 높이
+  const clientHeight = document.documentElement.clientHeight;
+
+  // 뷰포트가 문서의 맨 아래에 도달했는지 확인하는 조건
+  // (scrollTop + clientHeight >= documentHeight)
+  // 일반적으로 여유 공간을 두어 미리 로드합니다. (예: 맨 아래에서 100px 위)
+  const nearBottom = (scrollTop + clientHeight + 100) >= documentHeight;
+
+  if (nearBottom) {
+    loadItems();
+  }
+};
+
+// 💡 5. 컴포넌트 마운트 시 초기 데이터 로드 및 이벤트 리스너 등록
+onMounted(() => {
+  loadItems(); // 첫 페이지 데이터 로드
+  window.addEventListener('scroll', handleScroll); // 스크롤 이벤트 리스너 등록
+});
+
+// 💡 6. 컴포넌트 언마운트 시 이벤트 리스너 제거 (메모리 누수 방지)
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -27,6 +80,14 @@ const state = reactive({ // ① 반응형상태, 내부에 상품 목록을 저�
             <Card :item="item"/> <!-- ⑦ item 속성에 각 상품 데이터(item)을 입력해 전달-->
           </div>
         </div>
+      </div>
+      <div class="text-center py-4">
+        <div v-if="state.isLoading" class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p v-else-if="state.isLast && state.items.length > 0" class="text-muted">
+          더 이상 작품이 없습니다. 🖼️
+        </p>
       </div>
     </div>
   </div>
