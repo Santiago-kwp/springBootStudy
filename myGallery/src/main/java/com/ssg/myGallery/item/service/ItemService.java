@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ItemService {
   // 전체 상품 목록 조회 = 리턴 타입으로 상품 조회 DTO 리스트

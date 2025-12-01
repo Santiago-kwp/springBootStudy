@@ -19,8 +19,11 @@ public class ItemController {
   private final ItemService itemService;
 
   @GetMapping("/api/items")
-  public Page<ItemRead> getItems(Pageable pageable) {
-    return itemService.findAll(pageable);
+  public ResponseEntity<?> getItems(Pageable pageable) {
+
+    Page<ItemRead> itemPage = itemService.findAll(pageable);
+    return new ResponseEntity<>(itemPage,HttpStatus.OK);
+
   }
 
   // 상품 상세 조회

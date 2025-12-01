@@ -1,0 +1,1 @@
+import{D as e}from"./index-CNvl0ag0.js";const a=async t=>{try{return e.get("/v1/api/items",t)}catch(r){throw console.error("상품 목록 조회 오류:",r),r}},n=t=>e.get(`/v1/api/items/${t}`).catch(r=>r.response),i=t=>{const r=Array.isArray(t)?t.join(","):String(t);return e.get("/v1/api/itemList",{itemIds:r}).catch(s=>s.response)};export{i as a,n as b,a as g};

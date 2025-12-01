@@ -1,0 +1,1 @@
+import{D as s}from"./index-CNvl0ag0.js";const o=r=>s.post("/v1/api/orders",r).catch(e=>e.response),a=r=>s.get("/v1/api/orders",r).catch(e=>e.response),p=r=>s.get(`/v1/api/orders/${r}`).catch(e=>e.response);export{o as a,p as b,a as g};
