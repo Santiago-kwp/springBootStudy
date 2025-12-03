@@ -53,12 +53,12 @@
     ```sql
     server {
       # server_name _; 와일드 카드인데 이걸로 하면 위의 IP 주소로 넣어도 리버스 프록시가 안됨..
-      server_name 223.130.151.228; # NCP public IP 주소로 변경
+      server_name [NCP public IP 주소]; # NCP public IP 주소로 변경
       listen 80;
     
       location / {
     
-        proxy_pass http://10.0.2.6:8080; # private subnet의 ip 주소 + 8080포트
+        proxy_pass http://[private subnet의 ip 주소]:8080; # private subnet의 ip 주소 + 8080포트
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -163,8 +163,9 @@
       ![image.png](images/image%205.png)
 
 - 빌드 파일 설정 및 private subnet안의 server에 가져다 놓기
-    - [`application.properties`](http://application.properties) 파일 수정
+    - `application.properties` 파일 수정
         - private subnet의 ip 주소로 url 변경
+        - **‼ ip 주소 대신에 `localhost` 로 변경하면 더 빠르다고 한다. NIC 까지가서 MAC 주소를 확인하지 않기 때문에** 
         - username, password를 설정한 아이디, 패스워드로 설정
 
   ![image.png](images/image%206.png)
