@@ -112,35 +112,36 @@ create table order_items (
                              id       int auto_increment comment '아이디' primary key,
                              order_id int                                  not null comment '주문 아이디',
                              item_id  int                                  not null comment '주문 상품 아이디',
+                             qty      int                                  not null comment '주문 상품 개수',
                              created  datetime default current_timestamp() not null comment '생성 일시'
 ) comment '주문 상품';
 
 -- 3. order_items 테이블 샘플 데이터
 
-INSERT INTO order_items (order_id, item_id)
+INSERT INTO order_items (order_id, item_id, qty)
 VALUES
     -- 주문 1 (총 1,900,000원)
-    (1, 1), -- 야간등반 (950,000원)
-    (1, 1), -- 야간등반 (950,000원)
+    (1, 1,2), -- 야간등반 (950,000원)
+    (1, 1,3), -- 야간등반 (950,000원)
 
     -- 주문 2 (총 5,400,000원)
-    (2, 2), -- 겨울산 (1,800,000원)
-    (2, 4), -- 절벽등반 (3,200,000원)
-    (2, 1), -- 야간등반 (950,000원)
-    (2, 1), -- 야간등반 (950,000원)
+    (2, 2,1), -- 겨울산 (1,800,000원)
+    (2, 4,2), -- 절벽등반 (3,200,000원)
+    (2, 1,3), -- 야간등반 (950,000원)
+    (2, 1,4), -- 야간등반 (950,000원)
 
     -- 주문 3 (총 7,600,000원)
-    (3, 6), -- 멀티등반2 (4,200,000원)
-    (3, 4), -- 절벽등반 (3,200,000원)
-    (3, 2), -- 겨울산 (1,800,000원)
-    (3, 1); -- 야간등반 (950,000원)
+    (3, 6,4), -- 멀티등반2 (4,200,000원)
+    (3, 4,3), -- 절벽등반 (3,200,000원)
+    (3, 2,2), -- 겨울산 (1,800,000원)
+    (3, 1,1); -- 야간등반 (950,000원)
 
 
 
 create table blocks (
-                        id      int auto_increment comment '아이디' primary key,
-                        token   varchar(250)                         not null comment '차단 토큰',
-                        created datetime default current_timestamp() not null comment '생성 일시'
+id      int auto_increment comment '아이디' primary key,
+token   varchar(250)                         not null comment '차단 토큰',
+created datetime default current_timestamp() not null comment '생성 일시'
 ) comment '토큰 차단';
 
 
@@ -148,21 +149,21 @@ create table blocks (
 -- DROP TABLE IF EXISTS user_addresses;
 
 CREATE TABLE user_addresses (
-                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                                user_id INT NOT NULL COMMENT '회원 ID',
-                                alias VARCHAR(50) NOT NULL COMMENT '주소 별칭 (예: 집, 회사)',
-                                recipient_name VARCHAR(50) COMMENT '수령인 이름',
-                                recipient_phone VARCHAR(20) COMMENT '수령인 연락처',
-                                zip_code VARCHAR(10) NOT NULL COMMENT '우편 번호',
-                                base_address VARCHAR(255) NOT NULL COMMENT '기본 주소 (도로명 또는 지번)',
-                                detail_address VARCHAR(255) COMMENT '상세 주소 (동, 호수)',
-                                is_default BOOLEAN NOT NULL DEFAULT FALSE COMMENT '기본 배송지 여부',
+id BIGINT PRIMARY KEY AUTO_INCREMENT,
+user_id INT NOT NULL COMMENT '회원 ID',
+alias VARCHAR(50) NOT NULL COMMENT '주소 별칭 (예: 집, 회사)',
+recipient_name VARCHAR(50) COMMENT '수령인 이름',
+recipient_phone VARCHAR(20) COMMENT '수령인 연락처',
+zip_code VARCHAR(10) NOT NULL COMMENT '우편 번호',
+base_address VARCHAR(255) NOT NULL COMMENT '기본 주소 (도로명 또는 지번)',
+detail_address VARCHAR(255) COMMENT '상세 주소 (동, 호수)',
+is_default BOOLEAN NOT NULL DEFAULT FALSE COMMENT '기본 배송지 여부',
 
-                                FOREIGN KEY (user_id)
-                                    REFERENCES members(id)
-                                    ON DELETE CASCADE, -- 회원이 삭제되면 등록된 주소도 함께 삭제 (CASCADE)
+FOREIGN KEY (user_id)
+    REFERENCES members(id)
+    ON DELETE CASCADE, -- 회원이 삭제되면 등록된 주소도 함께 삭제 (CASCADE)
 
-                                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '회원 배송지 목록 테이블';
 
 CREATE INDEX idx_user_default_address ON user_addresses (user_id, is_default);

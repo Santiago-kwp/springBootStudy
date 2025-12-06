@@ -1,9 +1,9 @@
 package com.mcptest.mcptoy.order.controller;
 
-import com.ssg.myGallery.account.helper.AccountHelper;
-import com.ssg.myGallery.order.dto.OrderRead;
-import com.ssg.myGallery.order.dto.OrderRequest;
-import com.ssg.myGallery.order.service.OrderService;
+import com.mcptest.mcptoy.account.helper.AccountHelper;
+import com.mcptest.mcptoy.order.dto.OrderRead;
+import com.mcptest.mcptoy.order.dto.OrderRequest;
+import com.mcptest.mcptoy.order.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

@@ -1,8 +1,8 @@
 package com.mcptest.mcptoy.cart.service;
 
-import com.ssg.myGallery.cart.dto.CartRead;
-import com.ssg.myGallery.cart.entity.Cart;
-import com.ssg.myGallery.cart.repository.CartRepository;
+import com.mcptest.mcptoy.cart.dto.CartRead;
+import com.mcptest.mcptoy.cart.entity.Cart;
+import com.mcptest.mcptoy.cart.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

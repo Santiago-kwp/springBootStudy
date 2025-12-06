@@ -6,16 +6,24 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter // ①
-@Setter // ②
+@Getter
+@Setter
 public class OrderRequest {
 
-  private String name; // ③
-  private String address; // ④
-  private String payment; // ⑤
-  private String cardNumber; // ⑥
-  private Long amount; // ⑦
-  private List<Integer> itemIds; // ⑧
+  private String name;
+  private String address;
+  private String payment;
+  private String cardNumber;
+  private Long amount;
+  private List<OrderItemRequest> items;
+
+  // OrderItemRequest 내부 클래스 정의 (외부 파일로 분리해도 됨)
+  @Getter
+  @Setter
+  public static class OrderItemRequest {
+    private Integer itemId;
+    private Integer qty;
+  }
 
   // 엔티티 객체로 변환
   public Order toEntity(Integer memberId) { // ⑨

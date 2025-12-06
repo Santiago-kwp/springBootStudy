@@ -6,30 +6,34 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-@Getter // ①
-@Entity // ②
-@Table(name = "order_items") // ③
+@Getter
+@Entity
+@Table(name = "order_items")
 public class OrderItem {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Integer id; // ④
+  private Integer id;
 
   @Column(nullable = false)
-  private Integer orderId; // ⑤
+  private Integer orderId;
 
   @Column(nullable = false)
-  private Integer itemId; // ⑥
+  private Integer itemId;
+
+  @Column(nullable = false)
+  private Integer qty; // 추가
 
   @Column(nullable = false, updatable = false)
   @CreationTimestamp
-  private LocalDateTime created; // ⑦
+  private LocalDateTime created;
 
-  public OrderItem() { // ⑧
+  public OrderItem() {
   }
 
-  public OrderItem(Integer orderId, Integer itemId) { // ⑧
+  public OrderItem(Integer orderId, Integer itemId, Integer qty) { // ⑧
     this.orderId = orderId;
     this.itemId = itemId;
+    this.qty = qty;
   }
 }
