@@ -1,0 +1,12 @@
+package com.mcptest.mcptoy.order.repository;
+
+import com.mcptest.mcptoy.order.entity.OrderItem;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> { // ①
+
+  // 주문 ID에 해당하는 주문 상품 목록 조회
+  List<OrderItem> findAllByOrderId(Integer orderId); // ②
+}
