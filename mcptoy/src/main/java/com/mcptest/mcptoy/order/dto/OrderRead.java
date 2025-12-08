@@ -26,8 +26,8 @@ public class OrderRead {
   @Builder
   public static class OrderItemRead { // ✅ static 내부 클래스로 정의
 
-    private ItemRead item; // ✅ 상품 자체의 정보 (기존 ItemRead)
-    private Integer qty;   // ✅ 주문한 수량
+    private ItemRead item; // 상품 자체의 정보 (기존 ItemRead)
+    private Integer qty;   // 주문한 수량
     private Long totalItemAmount; // 주문한 아이템별 총액
   }
 

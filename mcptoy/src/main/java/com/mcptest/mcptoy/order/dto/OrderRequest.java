@@ -17,7 +17,7 @@ public class OrderRequest {
   private Long amount;
   private List<OrderItemRequest> items;
 
-  // OrderItemRequest 내부 클래스 정의 (외부 파일로 분리해도 됨)
+  // OrderItemRequest 내부 클래스 정의
   @Getter
   @Setter
   public static class OrderItemRequest {
