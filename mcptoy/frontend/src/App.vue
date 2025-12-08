@@ -16,7 +16,10 @@ const handleLogout = () => {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/items">Items</RouterLink>
         <RouterLink to="/cart">Cart</RouterLink>
-        <RouterLink v-if="!authStore.isLoggedIn" to="/login">Login</RouterLink>
+        <template v-if="!authStore.isLoggedIn">
+          <RouterLink to="/login">Login</RouterLink>
+          <RouterLink to="/register">Register</RouterLink>
+        </template>
         <a v-else @click="handleLogout" href="#">Logout</a>
       </nav>
     </div>

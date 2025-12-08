@@ -6,15 +6,11 @@ export const useCartStore = defineStore('cart', () => {
     const items = ref([]);
 
     const cartItems = computed(() => items.value);
-    const cartItemCount = computed(() => items.value.reduce((acc, item) => acc + item.quantity, 0));
-    const cartTotalPrice = computed(() => items.value.reduce((acc, item) => acc + item.price * item.quantity, 0));
 
     function addItem(item) {
         const existingItem = items.value.find(i => i.id === item.id);
-        if (existingItem) {
-            existingItem.quantity++;
-        } else {
-            items.value.push({ ...item, quantity: 1 });
+        if (!existingItem) {
+            items.value.push({ ...item });
         }
         syncCart();
     }
@@ -27,25 +23,12 @@ export const useCartStore = defineStore('cart', () => {
         }
     }
 
-    function updateQuantity(itemId, quantity) {
-        const item = items.value.find(i => i.id === itemId);
-        if (item) {
-            item.quantity = quantity;
-            if (item.quantity <= 0) {
-                removeItem(itemId);
-            } else {
-                syncCart();
-            }
-        }
-    }
-
     async function syncCart() {
         const authStore = useAuthStore();
         if (!authStore.isLoggedIn) return;
 
         const cartData = items.value.map(item => ({
             itemId: item.id,
-            itemCount: item.quantity,
         }));
         
         try {
@@ -60,16 +43,13 @@ export const useCartStore = defineStore('cart', () => {
         if (!authStore.isLoggedIn) return;
 
         try {
-            const response = await apiClient.get('/carts');
+            const response = await apiClient.get('/cart/items');
             const cartData = response.data;
-            // This assumes the backend returns a list of items with their quantities
-            // We need to map this data to our cart's item structure
             const fetchedItems = cartData.map(cartItem => ({
                 id: cartItem.itemId,
                 name: cartItem.itemName,
                 price: cartItem.itemPrice,
                 imgPath: cartItem.itemImgPath,
-                quantity: cartItem.itemCount,
             }));
             items.value = fetchedItems;
         } catch (error) {
@@ -85,9 +65,9 @@ export const useCartStore = defineStore('cart', () => {
 
         const orderData = {
             ...orderInfo,
-            orderItems: items.value.map(item => ({
+            items: items.value.map(item => ({
                 itemId: item.id,
-                itemCount: item.quantity,
+                qty: 1,
             })),
         };
 
@@ -105,11 +85,8 @@ export const useCartStore = defineStore('cart', () => {
     return {
         items,
         cartItems,
-        cartItemCount,
-        cartTotalPrice,
         addItem,
         removeItem,
-        updateQuantity,
         fetchCart,
         placeOrder,
     };

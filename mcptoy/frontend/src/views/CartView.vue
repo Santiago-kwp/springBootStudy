@@ -1,28 +1,26 @@
 <template>
   <div class="cart-container">
     <h1>Shopping Cart</h1>
-    <div v-if="cartStore.cartItemCount === 0" class="empty-cart">
+    <div v-if="cartStore.cartItems.length === 0" class="empty-cart">
       Your cart is empty.
     </div>
     <div v-else>
       <div class="cart-items">
         <div v-for="item in cartStore.cartItems" :key="item.id" class="cart-item">
           <div class="item-info">
-            <img :src="`/img/${item.imgPath}`" :alt="item.name" class="item-image" />
+            <img :src="item.imgPath" :alt="item.name" class="item-image" />
             <div>
               <h3>{{ item.name }}</h3>
               <p>{{ item.price }} won</p>
             </div>
           </div>
           <div class="item-controls">
-            <input type="number" :value="item.quantity" @input="updateQuantity(item.id, $event.target.value)" min="1" />
-            <p>Total: {{ item.price * item.quantity }} won</p>
             <button @click="cartStore.removeItem(item.id)">Remove</button>
           </div>
         </div>
       </div>
       <div class="cart-summary">
-        <h3>Total: {{ cartStore.cartTotalPrice }} won</h3>
+        <h3>Total items: {{ cartStore.cartItems.length }}</h3>
       </div>
       <div class="order-form">
         <h2>Shipping Information</h2>
@@ -75,13 +73,6 @@ onMounted(() => {
   }
 });
 
-const updateQuantity = (itemId, quantity) => {
-  const numQuantity = Number(quantity);
-  if (numQuantity > 0) {
-    cartStore.updateQuantity(itemId, numQuantity);
-  }
-};
-
 const handlePlaceOrder = async () => {
   loading.value = true;
   error.value = null;
@@ -129,9 +120,6 @@ const handlePlaceOrder = async () => {
   display: flex;
   align-items: center;
   gap: 20px;
-}
-.item-controls input {
-  width: 60px;
 }
 .cart-summary {
   text-align: right;

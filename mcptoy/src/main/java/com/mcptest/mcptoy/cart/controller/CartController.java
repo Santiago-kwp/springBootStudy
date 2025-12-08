@@ -38,19 +38,20 @@ public class CartController {
     return new ResponseEntity<>(items, HttpStatus.OK);
   }
 
-  @PostMapping("/api/carts")
-  public ResponseEntity<?> push(HttpServletRequest request, @RequestBody CartRequest cartReq) {
-    // 로그인 회원 아이디
+  @PostMapping("/api/cart/items")
+  public ResponseEntity<?> syncCart(HttpServletRequest request, @RequestBody List<CartRequest> cartRequests) {
     Integer memberId = accountHelper.getMemberId(request);
 
-    // 장바구니 데이터 조회(특정 상품)
-    CartRead cart = cartService.find(memberId, cartReq.getItemId());
-
-    // 장바구니 데이터가 없다면
-    if (cart == null) {
-      cartService.save(cartReq.toEntity(memberId));
+    if (memberId == null) {
+      return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
-
+    
+    cartService.removeAll(memberId);
+    
+    for (CartRequest cartRequest : cartRequests) {
+      cartService.save(cartRequest.toEntity(memberId));
+    }
+    
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
@@ -73,12 +74,4 @@ public class CartController {
     cartService.removeAll(memberId);
     return new ResponseEntity<>(HttpStatus.OK);
   }
-
-
-
-
-
-
-
 }
-
