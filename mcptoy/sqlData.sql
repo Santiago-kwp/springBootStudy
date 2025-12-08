@@ -1,5 +1,7 @@
 use mcpgallery;
 
+select * from members;
+
 drop table if exists items;
 create table items (
                        id           int auto_increment comment '아이디' primary key,

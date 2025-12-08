@@ -1,9 +1,7 @@
-<script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
-
 <template>
   <main>
-    <TheWelcome />
+    <h1>Welcome to our shop!</h1>
+    <p>Please feel free to browse our products and add them to your cart.</p>
   </main>
 </template>
+
