@@ -72,7 +72,7 @@ export const useCartStore = defineStore('cart', () => {
         };
 
         try {
-            await apiClient.post('/orders', orderData);
+            await apiClient.post('/v1/api/orders', orderData);
             items.value = []; // Clear cart after successful order
             syncCart(); // Sync the empty cart with the backend
         } catch (error) {

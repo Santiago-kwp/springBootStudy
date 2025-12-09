@@ -18,13 +18,13 @@ public class Member {
   @Column(length = 50, nullable = false)
   private String name;
 
-  @Column(length = 50, nullable = false, unique = true)
+  @Column(name = "login_id", length = 50, nullable = false, unique = true)
   private String loginId;
 
-  @Column(length = 44, nullable = false)
+  @Column(name = "login_pw", length = 44, nullable = false)
   private String loginPw;
 
-  @Column(length = 16, nullable = false)
+  @Column(name = "login_pw_salt", length = 16, nullable = false)
   private String loginPwSalt;
 
   @Column(updatable = false, nullable = false)
