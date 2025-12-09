@@ -5,7 +5,7 @@
     <div v-if="error">{{ error }}</div>
     <div v-if="items" class="items-grid">
       <div v-for="item in items" :key="item.id" class="item-card">
-        <img :src="`/img/${item.imgPath}`" :alt="item.name" />
+        <img :src="item.imgPath" :alt="item.name" />
         <h3>{{ item.name }}</h3>
         <p>{{ item.price }} won</p>
         <button @click="addToCart(item)">Add to cart</button>
