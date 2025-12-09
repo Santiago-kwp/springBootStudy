@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+
 @Configuration // ① 설정 클래스 정의시 사용하는 애너테이션
 @RequiredArgsConstructor // ② 빈을 생성자 의존성 주입 애너테이션
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -17,5 +19,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     registry.addInterceptor(apiInterceptor) //적용할 인터셉터 지정
         .addPathPatterns("/v1/api/**")  //인터셉터 적용 URL 경로 지정
         .excludePathPatterns("/v1/api/account/**", "/v1/api/items/**"); // 인터셉터를 적용하지 않을 URL 지정 (계정API 와 상품 API URL 예외 지정)
+  }
+
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    registry.addResourceHandler("/img/**")
+            .addResourceLocations("file:frontend/public/img/");
   }
 }
