@@ -50,10 +50,18 @@ public class Member {
     this.role = role;
   }
 
+  // ★ [추가] TokenUtils에서 객체를 복원할 때 사용할 생성자
+  public Member(Integer id, String loginId, String role) {
+    this.id = id;
+    this.loginId = loginId;
+    this.role = role;
+    this.loginPw = ""; // 인증 끝났으니 비번은 비워둠
+    this.name = "";    // 토큰에 이름이 없다면 빈값 처리 (필요하면 토큰에 name도 넣어서 가져와야 함)
+  }
+
   // 회원 정보 수정을 위한 도메인 메소드
   public void updateName(String name) { this.name = name; }
   public void updatePassword(String encodedPw) { this.loginPw = encodedPw; }
   public void updateRole(String role) { this.role = role; }
-
 
 }

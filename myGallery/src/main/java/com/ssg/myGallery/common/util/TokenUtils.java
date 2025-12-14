@@ -1,9 +1,11 @@
 package com.ssg.myGallery.common.util;
 
 import com.ssg.myGallery.member.dto.CustomUserDetails;
+import com.ssg.myGallery.member.entity.Member;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class TokenUtils {
 
@@ -26,10 +29,12 @@ public class TokenUtils {
   // 비밀키 초기화
   public TokenUtils(@Value("${jwt.secret}") String secretKey) {
     try {
+      // 1. application.properties에서 가져온 문자열을 Base64로 디코딩
       byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+      // 2. HMAC-SHA 알고리즘에 사용할 Key 객체로 변환
       this.key = Keys.hmacShaKeyFor(keyBytes);
     } catch(Exception e) {
-      throw new RuntimeException("JWT 비밀키 설정을 확인하세요. Base64 인코딩된 문자열이어야 합니다.");
+      throw new RuntimeException("JWT 비밀키 설정을 확인하세요...");
     }
   }
 
@@ -62,41 +67,57 @@ public class TokenUtils {
   }
 
 
-  // 토큰에서 인증 정보 조회
+  // 토큰에서 인증 객체 복원
   public Authentication getAuthentication(String accessToken) {
+    // 1. 토큰 파싱
     Claims claims = parseClaims(accessToken);
 
+    // 2. 권한 정보 유무 확인
     if (claims.get("auth") == null) {
       throw new RuntimeException("권한 정보가 없는 토큰입니다.");
     }
 
-    // 클레임에서 권한 정보 가져오기
+    // 3. 권한 정보 가져오
     List<SimpleGrantedAuthority> authorities = Arrays.stream(claims.get("auth").toString().split(","))
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
 
-    UserDetails principal = new User(claims.getSubject(), "", authorities);
+    // 4. Member 객체 임시 생성 (생성자 사용)
+    Integer memberId = claims.get("memberId", Integer.class);
+    String role = claims.get("role", String.class);
+    String loginId = claims.getSubject();
+
+    // Setter 대신 생성자로 주입
+    Member member = new Member(memberId, loginId, role);
+
+    // 5. CustomUserDetails 객체 생성
+    CustomUserDetails principal = new CustomUserDetails(member);
+
+    // 6. 최종 인증 토큰 반환
     return new UsernamePasswordAuthenticationToken(principal, "", authorities);
   }
 
+  // 역할: 토큰이 위조되었거나, 만료되었거나, 형식이 잘못되었는지 검사합니다.
   public boolean validateToken(String token) {
     try {
+      // 서명 키(key)를 이용해 파싱을 시도. 성공하면 true
       Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
       return true;
     } catch (ExpiredJwtException e) {
-      System.out.println("토큰이 만료되었습니다: " + e.getMessage());
+      log.error("토큰이 만료되었습니다: " + e.getMessage());
     } catch (UnsupportedJwtException e) {
-      System.out.println("지원하지 않는 JWT 형식입니다: " + e.getMessage());
+      log.error("지원하지 않는 JWT 형식입니다: " + e.getMessage());
     } catch (MalformedJwtException e) {
-      System.out.println("JWT 구조가 잘못되었습니다: " + e.getMessage());
+      log.error("JWT 구조가 잘못되었습니다: " + e.getMessage());
     } catch (SignatureException e) {
-      System.out.println("JWT 서명이 유효하지 않습니다: " + e.getMessage());
+      log.error("JWT 서명이 유효하지 않습니다: " + e.getMessage());
     } catch (IllegalArgumentException e) {
-      System.out.println("JWT 토큰이 비어있습니다: " + e.getMessage());
+      log.error("JWT 토큰이 비어있습니다: " + e.getMessage());
     }
     return false;
   }
 
+  // 역할: 토큰 내부의 정보(Payload)를 꺼냅니다.
   public Claims parseClaims(String accessToken) {
     try {
       return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();

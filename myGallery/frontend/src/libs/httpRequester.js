@@ -29,7 +29,7 @@ instance.interceptors.response.use(
         }
       // ② HTTP 응답코드가 401 이라면 액세스 토큰이 만료된 것일 수 있으므로 쿠키에 있는 리프레시 토큰으로 액세스 토큰을 다시 요청한다.
       //   쿠키는 HTTP 요청시 자동으로 포함되므로, 액세스 토큰을 다시 받았다면 토큰을 교체하여 HTTP 요청을 다시 수행한다.
-      //    해당 요청의 HTTP 응답 상태 코드가 이전과 동일한 401 일 수도 있으므로 방지를 위해 요청 설정(config)에 config.retried = true 설정한다.
+      //   해당 요청의 HTTP 응답 상태 코드가 이전과 동일한 401 일 수도 있으므로 방지를 위해 요청 설정(config)에 config.retried = true 설정한다.
       const config = err.config;
 
       if (config.retried) { // 재요청 여부
@@ -49,6 +49,7 @@ instance.interceptors.response.use(
         if (!accessToken) {
           throw new Error("Token refresh failed");
         }
+        // 확인 완료! console.log("새로운 토큰 발급! : ", accessToken)
         // 계정 스토어의 액세스 토큰 변경
         accountStore.setAccessToken(accessToken);
 
@@ -57,9 +58,11 @@ instance.interceptors.response.use(
 
         // 요청 헤더 갱신
         config.headers['Authorization'] = `Bearer ${accessToken}`;
+        // 확인 완료! console.log("2. 교체된 헤더 값:", config.headers['Authorization']); // "Bearer eyJ..." 형태여야 함
+
         // 중복 재요청 방지를 위한 프로퍼티 추가
         config.retried = true;
-        // 재요청
+        // 원래 하려던 요청을 새 토큰으로 다시 실행
         return instance(config);
 
       } catch (refreshError) {

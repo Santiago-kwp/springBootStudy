@@ -32,10 +32,11 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor // ③ 생성자 의존성 주입
 public class TokenAccountHelper implements AccountHelper {
 
-  private final MemberService memberService; // ④ 회원 서비스
-  private final BlockService blockService; // ⑤ 토큰 차단 서비스
-  private final AuthenticationManager authenticationManager; // 주입 필요
-  private final TokenUtils tokenUtils; // 주입 필요
+  private final MemberService memberService; // ④ DB 저장/조회 회원 서비스
+  private final BlockService blockService; // ⑤ 토큰 블랙리스트 관리
+  private final AuthenticationManager authenticationManager; // 인증 담당 (ID/PW 검사)
+  private final TokenUtils tokenUtils; // 토큰 생성/검증/파싱
+
 
   // 액세스 토큰 조회
   private String getAccessToken(HttpServletRequest req) { // ⑥ HTTP 유틸을 호출하여 사용자의 요청에 담긴 토큰을 조회하고 리턴한다.

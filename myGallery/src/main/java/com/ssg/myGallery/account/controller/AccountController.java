@@ -2,13 +2,7 @@ package com.ssg.myGallery.account.controller;
 
 import com.ssg.myGallery.account.dto.AccountJoinRequests;
 import com.ssg.myGallery.account.dto.AccountLoginRequests;
-import com.ssg.myGallery.account.etc.AccountConstants;
 import com.ssg.myGallery.account.helper.AccountHelper;
-import com.ssg.myGallery.block.service.BlockService;
-import com.ssg.myGallery.common.util.HttpUtils;
-import com.ssg.myGallery.common.util.TokenUtils;
-import com.ssg.myGallery.exception.AccountNotFoundException;
-import com.ssg.myGallery.exception.InvalidPasswordException;
 import com.ssg.myGallery.exception.LoginIdDuplicateException;
 import com.ssg.myGallery.member.dto.MemberLogin;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +13,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountController {
 
   private final AccountHelper accountHelper;
-  private final BlockService blockService; // ① 스프링 컨테이너에 의해 의존성 주입될 토큰 차단 서비스 필드
 
 
   // 이메일 형식 검증을 위한 정규표현식 (간단 버전)
