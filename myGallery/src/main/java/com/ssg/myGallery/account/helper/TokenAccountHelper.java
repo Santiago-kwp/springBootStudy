@@ -13,6 +13,7 @@ import com.ssg.myGallery.member.dto.CustomUserDetails;
 import com.ssg.myGallery.member.dto.MemberLogin;
 import com.ssg.myGallery.member.entity.Member;
 import com.ssg.myGallery.member.service.MemberService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -23,11 +24,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service // ① 스프링 컨테이너 서비스 컴포넌트
 @Primary
-// ② 구현체의 우선순위 애너테이션으로 AccountHelper 인터페이스의 구현체는 2개가 된다.(SessionAccountHelper, TokenAccountHelper) 이때 해당 구현체를 우선적으로 의존성 주입한다.
 @RequiredArgsConstructor // ③ 생성자 의존성 주입
 public class TokenAccountHelper implements AccountHelper {
 
@@ -46,18 +47,11 @@ public class TokenAccountHelper implements AccountHelper {
     return HttpUtils.getCookieValue(req, AccountConstants.REFRESH_TOKEN_NAME);
   }
 
-  // 회원 아이디 조회 (수정됨)
-  // TokenUtils가 memberId를 직접 클레임에 넣지 않고 subject(loginId)만 넣으므로 로직 변경
+  // 회원 아이디 조회 (claim 기반)
   private Integer getMemberId(String token) {
     if (tokenUtils.validateToken(token)) {
-      // 1. 토큰에서 인증 객체 추출
-      Authentication authentication = tokenUtils.getAuthentication(token);
-      // 2. 로그인 아이디(Subject) 추출
-      String loginId = authentication.getName();
-      // 3. DB에서 ID 조회
-      return memberService.findByLoginId(loginId)
-              .map(Member::getId)
-              .orElse(null);
+      Claims claims = tokenUtils.parseClaims(token);
+      return claims.get("memberId", Integer.class);
     }
     return null;
   }
@@ -65,18 +59,15 @@ public class TokenAccountHelper implements AccountHelper {
   // 회원가입
   @Override
   public void join(AccountJoinRequests joinReq) {
-    // 1. 이메일(loginId) 중복 검사
     if (memberService.isLoginIdExists(joinReq.getLoginId())) {
       throw new LoginIdDuplicateException("이미 사용 중인 이메일(loginId)입니다: " + joinReq.getLoginId());
     }
-    // 2. 저장 (비밀번호 암호화는 MemberService 내부에서 수행한다고 가정)
     memberService.save(joinReq.getName(), joinReq.getLoginId(), joinReq.getLoginPw());
   }
 
   // 로그인
   @Override
   public MemberLogin login(AccountLoginRequests loginReq, HttpServletRequest req, HttpServletResponse res) {
-
     // 1. 인증 토큰 생성 (ID/PW)
     UsernamePasswordAuthenticationToken authenticationToken =
             new UsernamePasswordAuthenticationToken(loginReq.getLoginId(), loginReq.getLoginPw());
@@ -85,14 +76,12 @@ public class TokenAccountHelper implements AccountHelper {
     // 실패 시 BadCredentialsException 발생 (GlobalExceptionHandler 에서 처리 필요)
     Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-    // 3. 액세스 토큰 발급
-    String accessToken = tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
+    // Access / Refresh 토큰 발급 (tokenType 구분자 포함)
+    String accessToken = tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES, "access");
+    String refreshToken = tokenUtils.generateToken(authentication, AccountConstants.REFRESH_TOKEN_EXP_MINUTES, "refresh");
 
-    // 4. 리프레시 토큰 발급 (같은 인증 정보 사용, 만료 시간만 길게)
-    String refreshToken = tokenUtils.generateToken(authentication, AccountConstants.REFRESH_TOKEN_EXP_MINUTES);
-
-    // 5. 리프레시 토큰 쿠키 저장
-    HttpUtils.setCookie(res, AccountConstants.REFRESH_TOKEN_NAME, refreshToken, 0);
+    // Refresh Token 쿠키 저장 (분 → 초 변환만 수행)
+    HttpUtils.setCookie(res, AccountConstants.REFRESH_TOKEN_NAME, refreshToken, AccountConstants.REFRESH_TOKEN_EXP_MINUTES * 60);
 
     // 6. 응답 DTO 생성
     // Authentication 의 Principal 은 CustomUserDetails 타입임
@@ -103,32 +92,23 @@ public class TokenAccountHelper implements AccountHelper {
             .id(member.getId())
             .loginId(member.getLoginId())
             .name(member.getName())
+            .role(member.getRole())
             .accessToken(accessToken)
             .build();
   }
 
   // 회원 아이디 조회
   @Override
-  public Integer getMemberId(HttpServletRequest req) { // ⑨
+  public Integer getMemberId(HttpServletRequest req) {
     // 액세스 토큰으로 회원 아이디 조회
     return this.getMemberId(getAccessToken(req));
   }
 
-  // 로그인 여부 확인
+  // 로그인 여부 확인 (Access Token만 검증)
   @Override
-  public boolean isLoggedIn(HttpServletRequest req) { // ⑨
+  public boolean isLoggedIn(HttpServletRequest req) {
     String accessToken = getAccessToken(req);
-
-    // 1. 액세스 토큰 검증 (인스턴스 메서드 사용)
-    if (accessToken != null && tokenUtils.validateToken(accessToken)) {
-      return true;
-    }
-
-    // 2. 리프레시 토큰 검증
-    String refreshToken = getRefreshToken(req);
-    return refreshToken != null
-            && tokenUtils.validateToken(refreshToken)
-            && !blockService.has(refreshToken);
+    return accessToken != null && tokenUtils.validateToken(accessToken);
   }
 
 
@@ -148,5 +128,31 @@ public class TokenAccountHelper implements AccountHelper {
         blockService.add(refreshToken);
       }
     }
+  }
+
+  // Access Token 재발급
+  @Override
+  public String regenerate(HttpServletRequest req) {
+    String refreshToken = getRefreshToken(req);
+
+    if (StringUtils.hasLength(refreshToken)
+            && tokenUtils.validateToken(refreshToken)
+            && !blockService.has(refreshToken)) {
+
+      Claims claims = tokenUtils.parseClaims(refreshToken);
+
+      // Refresh Token인지 확인
+      String type = claims.get("type", String.class);
+      if (!"refresh".equals(type)) {
+        log.warn("잘못된 토큰 타입으로 재발급 시도: {}", type);
+        return null;
+      }
+
+      // Authentication 객체 생성 후 새 Access Token 발급
+      Authentication authentication = tokenUtils.getAuthentication(refreshToken);
+      return tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES, "access");
+    }
+
+    return null; // 유효하지 않거나 차단된 토큰
   }
 }

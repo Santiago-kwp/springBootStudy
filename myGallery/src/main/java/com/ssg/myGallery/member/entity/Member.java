@@ -8,11 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Getter
 @Entity
 @Table(name="members")
+@NoArgsConstructor
 public class Member {
 
   @Id
@@ -36,7 +40,8 @@ public class Member {
   @CreationTimestamp  // 데이터 삽입 시 값이 없다면 현재 시간이 입력되도록 한다.
   private LocalDateTime created;
 
-  public Member() {}
+  @UpdateTimestamp
+  private LocalDateTime updated;
 
   public Member(String name, String loginId, String loginPw, String role) {
     this.name = name;
@@ -44,6 +49,11 @@ public class Member {
     this.loginPw = loginPw;
     this.role = role;
   }
+
+  // 회원 정보 수정을 위한 도메인 메소드
+  public void updateName(String name) { this.name = name; }
+  public void updatePassword(String encodedPw) { this.loginPw = encodedPw; }
+  public void updateRole(String role) { this.role = role; }
 
 
 }

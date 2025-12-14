@@ -35,7 +35,6 @@ public class AccountController {
 
   private final AccountHelper accountHelper;
   private final BlockService blockService; // ① 스프링 컨테이너에 의해 의존성 주입될 토큰 차단 서비스 필드
-  private final TokenUtils tokenUtils; // ① TokenUtils 주입 추가 (static 제거됨)
 
 
   // 이메일 형식 검증을 위한 정규표현식 (간단 버전)
@@ -48,62 +47,52 @@ public class AccountController {
     if (!StringUtils.hasLength(joinReq.getName())
         || !StringUtils.hasLength(joinReq.getLoginId())
         || !StringUtils.hasLength(joinReq.getLoginPw())) {
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      return ResponseEntity.badRequest().body(Map.of("message", "필수 입력값 누락"));
     }
 
-    // 2. 이메일 형식 검증 (정규표현식)
     if (!joinReq.getLoginId().matches(EMAIL_REGEX)) {
-      // 유효하지 않은 이메일 형식이라면 400 Bad Request 반환
-      return new ResponseEntity<>("유효하지 않은 이메일 형식입니다.", HttpStatus.BAD_REQUEST);
+      return ResponseEntity.badRequest().body(Map.of("message", "유효하지 않은 이메일 형식"));
     }
-
-
     try {
-      // 3. 회원가입 로직 실행 (내부에 중복 검증 포함)
       accountHelper.join(joinReq);
-      return new ResponseEntity<>(HttpStatus.OK);
+      return ResponseEntity.ok(Map.of("message", "회원가입 성공"));
     } catch (LoginIdDuplicateException e) {
-      // 4. LoginIdDuplicateException 발생 시 409 Conflict 반환
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT); // 409
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
     }
   }
 
   @PostMapping("/api/account/login")
-  public ResponseEntity<?> login(HttpServletRequest req, HttpServletResponse res, @RequestBody AccountLoginRequests loginReq) {
-    // 1. 입력 값 존재 및 길이 검증
+  public ResponseEntity<?> login(HttpServletRequest req, HttpServletResponse res,
+                                 @RequestBody AccountLoginRequests loginReq) {
     if (!StringUtils.hasLength(loginReq.getLoginId())
-        || !StringUtils.hasLength(loginReq.getLoginPw())) {
-      return new ResponseEntity<>("아이디와 비밀번호를 모두 입력해야 합니다.", HttpStatus.BAD_REQUEST);
+            || !StringUtils.hasLength(loginReq.getLoginPw())) {
+      return ResponseEntity.badRequest().body(Map.of("message", "아이디와 비밀번호를 모두 입력해야 합니다."));
     }
-
-    // 2. 이메일 형식 검증 (정규표현식)
     if (!loginReq.getLoginId().matches(EMAIL_REGEX)) {
-      return new ResponseEntity<>("유효하지 않은 이메일 형식입니다.", HttpStatus.BAD_REQUEST);
+      return ResponseEntity.badRequest().body(Map.of("message", "유효하지 않은 이메일 형식"));
     }
-
     try {
       MemberLogin output = accountHelper.login(loginReq, req, res);
-      return new ResponseEntity<>(output, HttpStatus.OK); // 200 OK
-
+      return ResponseEntity.ok(output);
     } catch (BadCredentialsException e) {
-      // 보안상 "아이디가 없다"고 콕 집어 말해주기보다는 "정보가 일치하지 않는다"고 하는 것이 안전함.
-      return new ResponseEntity<>("아이디 또는 비밀번호가 일치하지 않습니다!", HttpStatus.UNAUTHORIZED);
-
-    } catch (Exception e) { // 그 외 예상치 못한 서버 오류
-      log.info("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
-      return new ResponseEntity<>("로그인 처리 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR); // 500
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+              .body(Map.of("message", "아이디 또는 비밀번호가 일치하지 않습니다."));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(Map.of("message", "로그인 처리 중 서버 오류 발생"));
     }
   }
 
   @GetMapping("/api/account/check")
   public ResponseEntity<?> check(HttpServletRequest req) {
-    return new ResponseEntity<>(accountHelper.isLoggedIn(req), HttpStatus.OK);
+    boolean loggedIn = accountHelper.isLoggedIn(req);
+    return ResponseEntity.ok(Map.of("loggedIn", loggedIn));
   }
 
   @PostMapping("/api/account/logout")
   public ResponseEntity<?> logout(HttpServletRequest req, HttpServletResponse res) {
     accountHelper.logout(req, res);
-    return new ResponseEntity<>(HttpStatus.OK);
+    return ResponseEntity.ok(Map.of("message", "로그아웃 성공"));
   }
 
 // ② 액세스 토큰을 재발급하는 메서드. @GetMapping 애너테이션을 지정하여 HTTP GET 요청을 매핑하고, 연결 경로로 /api/account/token 을 지정한다.
@@ -111,26 +100,12 @@ public class AccountController {
 
   @GetMapping("/api/account/token")
   public ResponseEntity<?> regenerate(HttpServletRequest req) {
-    String accessToken = "";
-    String refreshToken = HttpUtils.getCookieValue(req, AccountConstants.REFRESH_TOKEN_NAME);
-
-    // ③ 인스턴스 메서드(tokenUtils.validateToken) 사용
-    if (StringUtils.hasLength(refreshToken)
-            && tokenUtils.validateToken(refreshToken)
-            && !blockService.has(refreshToken)) {
-
-      // ④ 토큰에서 Authentication 객체 추출 (Map 파싱 방식 대체)
-      Authentication authentication = tokenUtils.getAuthentication(refreshToken);
-
-      // ⑤ 새 액세스 토큰 생성 (Authentication 객체 기반)
-      accessToken = tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
+    String newAccessToken = accountHelper.regenerate(req);
+    if (newAccessToken == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+              .body(Map.of("message", "토큰이 유효하지 않거나 만료되었습니다."));
     }
-
-    if (!StringUtils.hasLength(accessToken)) {
-      return new ResponseEntity<>("토큰이 유효하지 않거나 만료되었습니다.", HttpStatus.UNAUTHORIZED);
-    }
-
-    return new ResponseEntity<>(accessToken, HttpStatus.OK);
+    return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
   }
 
 

@@ -1,65 +1,54 @@
 <script setup>
-import {useAccountStore} from "@/stores/account";
-import {logout} from "@/services/accountService";
-import {ref,  computed} from "vue";
-import {useRouter} from "vue-router";
+import { useAccountStore } from "@/stores/account";
+import { logout } from "@/services/accountService";
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import logo from '@/assets/images/logo.png';
+
 const logoUrl = ref(logo);
+const accountStore = useAccountStore();
+const router = useRouter();
 
-
-// 계정 스토어
-const accountStore = useAccountStore(); // ①
-
-// 라우터 객체
-const router = useRouter(); // ②
-
-// 로그아웃
 const logoutAccount = async () => {
-
   const confirmed = window.confirm("정말로 로그아웃 하시겠습니까?");
-  if (!confirmed) {
-    return;
-  }
+  if (!confirmed) return;
 
-  const res = await logout();
-  if (res.status === 200) {
-    accountStore.setLoggedIn(false, null); // 로그아웃 시 user 정보를 null로 초기화
-    accountStore.setAccessToken(""); // ① 로그 아웃을 위한 메서드 수정, 로그 아웃 성공시 계정 스토어의 액세스 토큰 값을 초기화하여 이후 HTTP 요청에서 토큰이 사용되지 않도록
+  try {
+    await logout(); // 서버 로그아웃 요청
+  } catch (err) {
+    console.warn("로그아웃 처리 중 서버 에러 발생 (강제 로그아웃 진행):", err);
+  } finally {
+    accountStore.clearAccount(); // 스토어 + localStorage 정리
     window.alert("성공적으로 로그아웃되었습니다.");
-    await router.push("/");
-  } else {
-    window.alert("로그아웃 처리 중 오류가 발생했습니다.");
+    router.push("/"); // 홈으로 이동
   }
 };
 
-// 💡 1. 환영 메시지를 구성하는 Computed 속성 정의
 const welcomeMessage = computed(() => {
-  // user 객체가 있고, user.name이 있을 때만 메시지를 구성합니다.
-  if (accountStore.user && accountStore.user.name) {
-    return `✨ ${accountStore.user.name}님 환영합니다!`;
-  }
-  return ''; // 로그인 상태가 아니거나 이름이 없을 경우 빈 문자열 반환
+  return accountStore.user?.name ? `✨ ${accountStore.user.name}님 환영합니다!` : "";
 });
-
 </script>
 
 <template>
   <header class="main-header">
     <div class="navbar text-white">
       <div class="container">
-        <router-link :to="{name: 'home'}" class="navbar-brand">
-          <strong><img :src="logoUrl" alt="내 로고" class="header-logo"/>Climb Gallery</strong>
+        <router-link :to="{ name: 'home' }" class="navbar-brand">
+          <strong>
+            <img :src="logoUrl" alt="내 로고" class="header-logo" />
+            Climb Gallery
+          </strong>
         </router-link>
         <div class="menus d-flex gap-4">
-          <template v-if="!accountStore.loggedIn">  <!-- ④ -->
+          <template v-if="!accountStore.loggedIn">
             <router-link to="/login">로그인</router-link>
             <router-link to="/join">회원가입</router-link>
           </template>
           <template v-else>
-            <a>{{ welcomeMessage }}&nbsp;</a>
+            <span v-if="accountStore.user?.name">{{ welcomeMessage }}</span>
             <router-link to="/orders">주문 내역</router-link>
             <router-link to="/cart">장바구니</router-link>
-            <a @click="logoutAccount()">로그아웃</a>
+            <a @click="logoutAccount" style="cursor: pointer">로그아웃</a>
           </template>
         </div>
       </div>

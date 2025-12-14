@@ -6,28 +6,14 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class HttpUtils {
 
-  // 세션에 데이터 입력
-  public static void setSession(HttpServletRequest request, String key, Object value) {
-    request.getSession().setAttribute(key, value);
-  }
-
-  // 세션 값 조회
-  public static Object getSession(HttpServletRequest request, String key){
-    return request.getSession().getAttribute(key);
-  }
-
-  // 세션 삭제
-  public static void removeSession(HttpServletRequest request, String key){
-    request.getSession().removeAttribute(key);
-  }
-
   // 쿠키 입력 : 쿠키를 입력하는 메서드, 매개변수로 HTTP 응답 객체와 쿠키의 이름, 값,
   //             유효시간(초)를 받고, HttpOnly 옵션을 true 로 설정하여 해당 쿠키를 서버에서만 접근 가능하도록 설정
   //             매개변수로 받은 유효시간이 0 이하라면 유효시간을 지정하지 않는데
   //             이렇게 하면 웹 브라우저가 종료될 때  쿠키도 삭제됨
   public static void setCookie(HttpServletResponse res, String name, String value, int expSeconds) { // ③
     Cookie cookie = new Cookie(name, value);
-    cookie.setHttpOnly(true);
+    cookie.setHttpOnly(true); // 자바스크립트 접근 불가
+//    cookie.setSecure(true);     // HTTPS에서만 전송
     cookie.setPath("/");
 
     if (expSeconds > 0) {
@@ -64,8 +50,8 @@ public class HttpUtils {
   public static String getBearerToken(HttpServletRequest req) {
     String authorization = req.getHeader("Authorization");
 
-    if (authorization != null) {
-      return authorization.replace("Bearer ", "").trim(); // Bearer 값 조회
+    if (authorization != null && authorization.startsWith("Bearer ")) {
+      return authorization.substring(7).trim(); // "Bearer " 제거 후 토큰 반환
     }
 
     return null;

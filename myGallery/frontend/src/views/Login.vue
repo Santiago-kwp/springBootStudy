@@ -66,17 +66,14 @@ const submit = async () => {
   try {
     // 2. 서버 요청 시도
     const res = await login(state.form);
-    // [성공 시 실행되는 구간: 200 OK]
-    // 인터셉터에서 에러를 던지지 않았으므로 여기까지 도달함
-    window.alert("로그인에 성공했습니다.");
 
-    // (1) 스토어 업데이트
+    // 로그인 성공 -> 스토어 업데이트
+    accountStore.setChecked(true);
     accountStore.setLoggedIn(true,  res.data);// ③ 로그인 성공시 응답받은 데이터(액세스 토큰 제외)를 저장
     accountStore.setAccessToken(res.data.accessToken); // 토큰을 별도 저장
 
-    // (2) 로컬 스토리지 저장 (새로고침 대비)
-    localStorage.setItem('accessToken', res.data.accessToken);
-    localStorage.setItem('user', JSON.stringify(res.data));
+    // UX 개선: alert 대신 헤더 환영 메시지로 대체 가능
+    window.alert("로그인에 성공했습니다.");
 
     await router.push({
       name: 'home'

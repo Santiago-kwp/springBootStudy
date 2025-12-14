@@ -1,5 +1,6 @@
 package com.ssg.myGallery.common.util;
 
+import com.ssg.myGallery.member.dto.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -22,7 +23,7 @@ public class TokenUtils {
 
   private final Key key;
 
-  // 생성자 주입 방식으로 변경 (application.yml 활용 권장)
+  // 비밀키 초기화
   public TokenUtils(@Value("${jwt.secret}") String secretKey) {
     try {
       byte[] keyBytes = Decoders.BASE64.decode(secretKey);
@@ -33,7 +34,7 @@ public class TokenUtils {
   }
 
   // 토큰 생성 (Authentication 객체 기반)
-  public String generateToken(Authentication authentication, int expireMinutes) {
+  public String generateToken(Authentication authentication, int expireMinutes, String tokenType) {
     String authorities = authentication.getAuthorities().stream()
             .map(a -> a.getAuthority())
             .collect(Collectors.joining(","));
@@ -41,11 +42,21 @@ public class TokenUtils {
     long now = (new Date()).getTime();
     Date validity = new Date(now + (1000L * 60 * expireMinutes));
 
+    // CustomUserDetails에서 memberId 추출
+    Integer memberId = null;
+    String role = null;
+    if (authentication.getPrincipal() instanceof CustomUserDetails customUserDetails) {
+      memberId = customUserDetails.getMember().getId();
+      role = customUserDetails.getMember().getRole();
+    }
+
     return Jwts.builder()
-            .setSubject(authentication.getName())
-            .claim("auth", authorities)
-            // 필요하다면 memberId 등 추가 정보 claim에 넣기
-            .setExpiration(validity)
+            .setSubject(authentication.getName()) // loginId
+            .claim("auth", authorities)        // 권한 정보
+            .claim("memberId", memberId)       // DB의 memberId Pk 값
+            .claim("role", role)       // DB의 memberId Pk 값
+            .claim("type", tokenType)          // access / refresh 구분자
+            .setExpiration(validity)              // 만료 시간
             .signWith(key, SignatureAlgorithm.HS256)
             .compact();
   }
@@ -72,17 +83,25 @@ public class TokenUtils {
     try {
       Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
       return true;
-    } catch (Exception e) {
-      // 로깅 처리
+    } catch (ExpiredJwtException e) {
+      System.out.println("토큰이 만료되었습니다: " + e.getMessage());
+    } catch (UnsupportedJwtException e) {
+      System.out.println("지원하지 않는 JWT 형식입니다: " + e.getMessage());
+    } catch (MalformedJwtException e) {
+      System.out.println("JWT 구조가 잘못되었습니다: " + e.getMessage());
+    } catch (SignatureException e) {
+      System.out.println("JWT 서명이 유효하지 않습니다: " + e.getMessage());
+    } catch (IllegalArgumentException e) {
+      System.out.println("JWT 토큰이 비어있습니다: " + e.getMessage());
     }
     return false;
   }
 
-  private Claims parseClaims(String accessToken) {
+  public Claims parseClaims(String accessToken) {
     try {
       return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
     } catch (ExpiredJwtException e) {
-      return e.getClaims();
+      return e.getClaims(); // 만료된 토큰이라도 Claims 반환
     }
   }
 }

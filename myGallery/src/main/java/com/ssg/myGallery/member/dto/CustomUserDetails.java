@@ -16,8 +16,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 예: role 필드가 있다면 사용, 없다면 기본 유저 권한 부여
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority(member.getRole()));
     }
 
     @Override public String getPassword() { return member.getLoginPw(); }

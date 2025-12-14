@@ -23,5 +23,7 @@ public interface AccountHelper {
   // 로그아웃
   void logout(HttpServletRequest request, HttpServletResponse response);
 
+  String regenerate(HttpServletRequest request);
+
 }
 

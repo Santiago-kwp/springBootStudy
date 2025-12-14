@@ -139,7 +139,7 @@ VALUES
 drop table if exists blocks;
 create table blocks (
                         id      int auto_increment comment '아이디' primary key,
-                        token   varchar(250)                         not null comment '차단 토큰',
+                        token_hash VARCHAR(64) NOT NULL UNIQUE, -- SHA-256 해시 문자열 길이 64
                         created datetime default current_timestamp() not null comment '생성 일시'
 ) comment '토큰 차단';
 
@@ -167,3 +167,5 @@ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '회원 배송지 목록 테이블';
 
 CREATE INDEX idx_user_default_address ON user_addresses (user_id, is_default);
+
+select * from members;

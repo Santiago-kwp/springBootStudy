@@ -16,19 +16,41 @@ export const useAccountStore = defineStore("account", { // ①
     setLoggedIn(val, userData = null) { // ⑤
       this.loggedIn = val;
 
-      if (userData) {
-        const { accessToken, ...userRestData } = userData;
-        this.user = userRestData;
+      if (val) {
+        // [로그인 상황] : userData가 있으면 저장
+        if (userData) {
+          const { accessToken, ...userRestData } = userData;
+          this.user = userRestData;
+          localStorage.setItem("user", JSON.stringify(userRestData));
+        }
+      } else {
+        // [로그아웃 상황] : ★ user 정보도 반드시 비워야 함
+        this.user = null;
+        localStorage.removeItem("user");
       }
-
     },
     setAccessToken(val) { // ② 액세스 토큰의 값 수정 메서드
       this.accessToken = val;
+      // 로컬스토리지에도 저장 (새로고침 시 유지)
+      if (val) {
+        localStorage.setItem("accessToken", val);
+      } else {
+        localStorage.removeItem("accessToken");
+      }
     },
+    // ★ [추가] 로그아웃 시 상태를 한방에 초기화하는 메서드
+    clearAccount() {
+      // 전체 상태 초기화
+      this.checked = false;
+      this.loggedIn = false;
+      this.user = null;
+      this.accessToken = "";
+
+      // 로컬스토리지 정리
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+    }
+
   },
-  // 💡 [추가] 상태 영속성 설정
-  persist: {
-    storage: localStorage, // LocalStorage에 저장
-    paths: ['user', 'accessToken', 'loggedIn'],
-  }
+  persist: true // pinia-plugin-persistedstate 사용
 });

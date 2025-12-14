@@ -4,6 +4,7 @@ import com.ssg.myGallery.block.entity.Block;
 import com.ssg.myGallery.block.repository.BlockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.apache.commons.codec.digest.DigestUtils; // SHA-256 해시 유틸
 
 @Service
 @RequiredArgsConstructor
@@ -11,15 +12,17 @@ public class BaseBlockService implements BlockService {
 
   private final BlockRepository blockRepository;
 
-  // 토큰 차단 데이터 삽입
   @Override
   public void add(String token) {
-    blockRepository.save(new Block(token));
+    String hash = DigestUtils.sha256Hex(token);
+    if (!blockRepository.existsByTokenHash(hash)) {
+      blockRepository.save(new Block(hash));
+    }
   }
 
-  // 토큰 차단 데이터가 있는지 확인
   @Override
   public boolean has(String token) {
-    return blockRepository.findByToken(token).isPresent();
+    String hash = DigestUtils.sha256Hex(token);
+    return blockRepository.existsByTokenHash(hash);
   }
 }
