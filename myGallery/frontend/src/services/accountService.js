@@ -8,7 +8,8 @@ export const join = (args) => { // ①
 
 // 로그인 : 로그인 처리 메소드, HTTP 메소드로 로그인 API를 호출하고 응답값을 리턴하는 기능
 export const login = (args) => { // ②
-  return httpRequester.post("/v1/api/account/login", args).catch(e => e.response);
+  // .catch 제거 : 에러 발생 시 컴포넌트가 try-catch 로 잡도록 함
+  return httpRequester.post("/v1/api/account/login", args);
 };
 
 // 로그인 여부 확인 : HTTP GET 메소드로 로그인 여부 확인하는 API를 호출하고 응답값을 리턴하는 기능

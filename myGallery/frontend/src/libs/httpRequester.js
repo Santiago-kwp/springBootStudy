@@ -18,7 +18,13 @@ instance.interceptors.response.use((res) => {
       // window.alert("잘못된 요청입니다.");
       break;
 
-    case 401: // ② HTTP 응답코드가 401 이라면 액세스 토큰이 만료된 것일 수 있으므로 쿠키에 있는 리프레시 토큰으로 액세스 토큰을 다시 요청한다.
+    case 401:
+      // 로그인 요청(/api/account/login)에서 발생한 401은 토큰 만료가 아니라 '비번 틀림'이므로 인터셉터 처리를 패스한다.
+        if (err.config.url.includes('/v1/api/account/login')) {
+          console.log("로그인 요청 발생!")
+          return Promise.reject(err);
+        }
+      // ② HTTP 응답코드가 401 이라면 액세스 토큰이 만료된 것일 수 있으므로 쿠키에 있는 리프레시 토큰으로 액세스 토큰을 다시 요청한다.
       //   쿠키는 HTTP요청시 자동으로 포함되므로, 액세스 토큰을 다시 받았다면 토큰을 교체하여 HTTP 요청을 다시 수행한다.
       //    해당 요청의 HTTP 응답 상태 코드가 이전과 동일한 401 일 수도 있으므로 방지를 위해 요청 설정(config)에 config.retried = true 설정한다.
       const config = err.config;

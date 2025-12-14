@@ -1,76 +1,88 @@
 package com.ssg.myGallery.common.util;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import javax.crypto.spec.SecretKeySpec;
-import org.springframework.util.StringUtils;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
+import java.security.Key;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
 public class TokenUtils {
 
-  private static final Key signKey; // ① 서명 키로 사용될 필드
+  private final Key key;
 
-  static { // ② TokenUtils 초기화 블록으로 유틸리트 클래스가 처음 로드될때 실행되는 정적 초기화 블록
-    //     문자열 secreKey를 생성하고 입력한 다음, 이를 변환해서 서명키 signKey에 입력한다.
-    //     secreKey는 발급자(개발자)가 임의로 설정한 32바이트 이상 문자열로, 보안상
-    //     부에 노출되면 안 되는 중요한 보안 키, 만약 실제 서비스시 다른 값을 사용해야 한다.
-
-    String secretKey = "SECURITY_KEY_2023042319572107_!!";
-    byte[] secretKeyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
-    signKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS256.getJcaName());
+  // 생성자 주입 방식으로 변경 (application.yml 활용 권장)
+  public TokenUtils(@Value("${jwt.secret}") String secretKey) {
+    try {
+      byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+      this.key = Keys.hmacShaKeyFor(keyBytes);
+    } catch(Exception e) {
+      throw new RuntimeException("JWT 비밀키 설정을 확인하세요. Base64 인코딩된 문자열이어야 합니다.");
+    }
   }
 
-  // 토큰 발급하는 메서드, 매개변수로 토큰의 제목,이름, 값, 유효 시간(분)을 받고 토큰을 생성하고 값을 리턴한다.
-  public static String generate(String subject, String name, Object value, int expMinutes) { // ③
-    // 만료 시간 설정
-    Date expTime = new Date();
+  // 토큰 생성 (Authentication 객체 기반)
+  public String generateToken(Authentication authentication, int expireMinutes) {
+    String authorities = authentication.getAuthorities().stream()
+            .map(a -> a.getAuthority())
+            .collect(Collectors.joining(","));
 
-    // 분(minute)을 밀리초(millisecond)로 변환해 입력
-    expTime.setTime(expTime.getTime() + 1000L * 60 * expMinutes);
+    long now = (new Date()).getTime();
+    Date validity = new Date(now + (1000L * 60 * expireMinutes));
 
-    // 기본 정보 입력
-    HashMap<String, Object> headerMap = new HashMap<>();
-    headerMap.put("typ", "JWT");
-    headerMap.put("alg", "HS256");
-
-    // 클레임 입력
-    HashMap<String, Object> claims = new HashMap<>();
-    claims.put(name, value);
-
-    // 토큰 발급
-    JwtBuilder builder = Jwts.builder()
-        .setHeader(headerMap)
-        .setSubject(subject)
-        .setExpiration(expTime)
-        .addClaims(claims)
-        .signWith(signKey, SignatureAlgorithm.HS256);
-
-    return builder.compact();
+    return Jwts.builder()
+            .setSubject(authentication.getName())
+            .claim("auth", authorities)
+            // 필요하다면 memberId 등 추가 정보 claim에 넣기
+            .setExpiration(validity)
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
   }
 
-  public static boolean isValid(String token) { // ④ 토큰의 상태가 유효한지 확인하는 메서드로 매개변수로 토큰을 받는다.
-    // 토큰 값이 있다면
-    if (StringUtils.hasLength(token)) {
-      try {
-        Jwts.parserBuilder().setSigningKey(signKey).build().parseClaimsJws(token);
-        return true;
-      } catch (ExpiredJwtException e) { // 만료됨
-      } catch (JwtException e) { // 유효하지 않음
-      }
+
+  // 토큰에서 인증 정보 조회
+  public Authentication getAuthentication(String accessToken) {
+    Claims claims = parseClaims(accessToken);
+
+    if (claims.get("auth") == null) {
+      throw new RuntimeException("권한 정보가 없는 토큰입니다.");
     }
 
+    // 클레임에서 권한 정보 가져오기
+    List<SimpleGrantedAuthority> authorities = Arrays.stream(claims.get("auth").toString().split(","))
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+
+    UserDetails principal = new User(claims.getSubject(), "", authorities);
+    return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+  }
+
+  public boolean validateToken(String token) {
+    try {
+      Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+      return true;
+    } catch (Exception e) {
+      // 로깅 처리
+    }
     return false;
   }
 
-  // 토큰 값 추출 : 토큰의 내부 값을 조회하는 메서드, 매개변수로 받은 토큰을 파싱해서 내부값을 맵(Map)타입으로 리턴한다.
-  public static Map<String, Object> getBody(String token) { // ⑤
-    return Jwts.parserBuilder().setSigningKey(signKey).build().parseClaimsJws(token).getBody();
+  private Claims parseClaims(String accessToken) {
+    try {
+      return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+    } catch (ExpiredJwtException e) {
+      return e.getClaims();
+    }
   }
 }

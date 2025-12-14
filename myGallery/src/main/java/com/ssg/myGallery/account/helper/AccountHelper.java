@@ -20,9 +20,6 @@ public interface AccountHelper {
   // 로그인 여부 확인
   boolean isLoggedIn(HttpServletRequest request);
 
-  // 로그인 여부 확인 및 사용자 정보 반환 - 세션 기반 방식일 경우
-  MemberLogin getLoginUser(HttpServletRequest request);
-
   // 로그아웃
   void logout(HttpServletRequest request, HttpServletResponse response);
 

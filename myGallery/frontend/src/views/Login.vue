@@ -49,49 +49,58 @@ const validatePassword = () => {
 
 // 로그인 데이터 제출
 const submit = async () => {
-  // 1. 아이디 및 형식 검증
-  if (!validateEmail()) { // validateEmail의 결과를 사용하여 검증
-    window.alert(state.errors.loginId);
+  // 1. 프론트엔드 유효성 검사
+  // alert을 띄우지 않고, validate 함수가 설정한 state.errors가 화면에 즉시 반영됨.
+  const isEmailValid = validateEmail();
+  const isPwValid = validatePassword();
+
+  if (!isEmailValid) {
     document.getElementById("loginId")?.focus();
     return;
   }
-
-  // 2. 비밀번호 입력 검증
-  if (!state.form.loginPw?.trim()) {
-    window.alert(state.errors.loginPw);
+  if (!isPwValid) {
     document.getElementById("loginPw")?.focus();
     return;
   }
 
-  // 모든 클라이언트 측 검증 통과 후, 서버로 데이터 전송
-  const res = await login(state.form);
-  console.log(res);
+  try {
+    // 2. 서버 요청 시도
+    const res = await login(state.form);
+    // [성공 시 실행되는 구간: 200 OK]
+    // 인터셉터에서 에러를 던지지 않았으므로 여기까지 도달함
+    window.alert("로그인에 성공했습니다.");
 
-  switch (res.status) {
-    case 200:
-      window.alert("로그인에 성공했습니다.")
-      accountStore.setLoggedIn(true,  res.data);// ③ 로그인 성공시 응답받은 데이터(액세스 토큰 제외)를 저장
-      accountStore.setAccessToken(res.data.accessToken); // 토큰을 별도 저장
-      await router.push({
-        name: 'home'
-      });
-      break;
+    // (1) 스토어 업데이트
+    accountStore.setLoggedIn(true,  res.data);// ③ 로그인 성공시 응답받은 데이터(액세스 토큰 제외)를 저장
+    accountStore.setAccessToken(res.data.accessToken); // 토큰을 별도 저장
 
-    case 404: // 아이디 존재 여부 검증 (회원 정보 없음)
-      window.alert("존재하지 않는 사용자 ID입니다.");
-      state.errors.loginId = "존재하지 않는 사용자 ID입니다."; // 에러 메시지 업데이트
-      document.getElementById("loginId")?.focus();
-      break;
+    // (2) 로컬 스토리지 저장 (새로고침 대비)
+    localStorage.setItem('accessToken', res.data.accessToken);
+    localStorage.setItem('user', JSON.stringify(res.data));
 
-    case 400: // 비밀번호 불일치 검증 (사용자의 잘못된 요청으로 처리)
-      window.alert("비밀번호가 일치하지 않습니다.");
-      state.errors.loginPw = "비밀번호가 일치하지 않습니다."; // 에러 메시지 업데이트
+    await router.push({
+      name: 'home'
+    });
+  } catch (err) {
+    const status = err.response?.status;
+
+    if (status === 401) {
+      // 백엔드에서 ID가 없든, 비번이 틀리든 전부 401을 리턴함
+      // alert 대신 입력창 아래에 에러 메시지를 표시하여 UX 개선
+      const msg = "아이디 또는 비밀번호가 일치하지 않습니다.";
+
+      state.errors.loginId = " "; // 빨간 테두리를 위해 값 설정 (메시지는 비움)
+      state.errors.loginPw = msg; // 비밀번호 쪽에 메시지 표시
+
+      state.form.loginPw = ""; // 비번 입력창 비우기
       document.getElementById("loginPw")?.focus();
-      break;
-
-    default: // 기타 서버 오류
-      window.alert("로그인 중 알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-      break;
+    }
+    else if (status === 500) {
+      window.alert("서버 오류가 발생했습니다. 관리자에게 문의해주세요.");
+    }
+    else {
+      window.alert("알 수 없는 오류가 발생했습니다.");
+    }
   }
 };
 </script>

@@ -9,6 +9,7 @@ import com.ssg.myGallery.common.util.TokenUtils;
 import com.ssg.myGallery.exception.AccountNotFoundException;
 import com.ssg.myGallery.exception.InvalidPasswordException;
 import com.ssg.myGallery.exception.LoginIdDuplicateException;
+import com.ssg.myGallery.member.dto.CustomUserDetails;
 import com.ssg.myGallery.member.dto.MemberLogin;
 import com.ssg.myGallery.member.entity.Member;
 import com.ssg.myGallery.member.service.MemberService;
@@ -18,6 +19,9 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,6 +33,8 @@ public class TokenAccountHelper implements AccountHelper {
 
   private final MemberService memberService; // ④ 회원 서비스
   private final BlockService blockService; // ⑤ 토큰 차단 서비스
+  private final AuthenticationManager authenticationManager; // 주입 필요
+  private final TokenUtils tokenUtils; // 주입 필요
 
   // 액세스 토큰 조회
   private String getAccessToken(HttpServletRequest req) { // ⑥ HTTP 유틸을 호출하여 사용자의 요청에 담긴 토큰을 조회하고 리턴한다.
@@ -40,62 +46,65 @@ public class TokenAccountHelper implements AccountHelper {
     return HttpUtils.getCookieValue(req, AccountConstants.REFRESH_TOKEN_NAME);
   }
 
-  // 회원 아이디 조회
-  private Integer getMemberId(String token) { // ⑧ 토큰을 통해 회원 아이디 조회 메서드  토큰 유틸을 호출하여 매개변수로 받은 토큰에 담긴 회원아이디를 조회하고 이를 리턴한다.
-    if (TokenUtils.isValid(token)) {
-      Map<String, Object> tokenBody = TokenUtils.getBody(token);
-      return (Integer) tokenBody.get(AccountConstants.MEMBER_ID_NAME);
+  // 회원 아이디 조회 (수정됨)
+  // TokenUtils가 memberId를 직접 클레임에 넣지 않고 subject(loginId)만 넣으므로 로직 변경
+  private Integer getMemberId(String token) {
+    if (tokenUtils.validateToken(token)) {
+      // 1. 토큰에서 인증 객체 추출
+      Authentication authentication = tokenUtils.getAuthentication(token);
+      // 2. 로그인 아이디(Subject) 추출
+      String loginId = authentication.getName();
+      // 3. DB에서 ID 조회
+      return memberService.findByLoginId(loginId)
+              .map(Member::getId)
+              .orElse(null);
     }
-
     return null;
   }
 
   // 회원가입
   @Override
-  public void join(AccountJoinRequests joinReq) { // ⑨
-
+  public void join(AccountJoinRequests joinReq) {
     // 1. 이메일(loginId) 중복 검사
     if (memberService.isLoginIdExists(joinReq.getLoginId())) {
-      // 중복된 경우, 409 Conflict를 유발할 커스텀 예외 발생
       throw new LoginIdDuplicateException("이미 사용 중인 이메일(loginId)입니다: " + joinReq.getLoginId());
     }
-
-    // 2. 중복이 아니면 저장 처리
+    // 2. 저장 (비밀번호 암호화는 MemberService 내부에서 수행한다고 가정)
     memberService.save(joinReq.getName(), joinReq.getLoginId(), joinReq.getLoginPw());
   }
 
   // 로그인
   @Override
-  public MemberLogin login(AccountLoginRequests loginReq, HttpServletRequest req, HttpServletResponse res) { // ⑨
+  public MemberLogin login(AccountLoginRequests loginReq, HttpServletRequest req, HttpServletResponse res) {
 
-    // 1. 회원 ID로 회원 정보 조회
-    Member member = memberService.findByLoginId(loginReq.getLoginId())
-        .orElseThrow(() -> new AccountNotFoundException("존재하지 않는 회원 ID입니다.")); // 404 대응
+    // 1. 인증 토큰 생성 (ID/PW)
+    UsernamePasswordAuthenticationToken authenticationToken =
+            new UsernamePasswordAuthenticationToken(loginReq.getLoginId(), loginReq.getLoginPw());
 
-    // 2. 비밀번호 일치 검증
-    if (memberService.find(loginReq.getLoginId(), loginReq.getLoginPw()) == null) {
-      throw new InvalidPasswordException("비밀번호가 일치하지 않습니다.");
-    }
+    // 2. 인증 수행 (Spring Security 가 CustomUserDetailsService + PasswordEncoder 를 사용해 검증)
+    // 실패 시 BadCredentialsException 발생 (GlobalExceptionHandler 에서 처리 필요)
+    Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-    // 회원 아이디
-    Integer memberId = member.getId();
+    // 3. 액세스 토큰 발급
+    String accessToken = tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
 
-    // 액세스 토큰 발급
-    String accessToken = TokenUtils.generate(AccountConstants.ACCESS_TOKEN_NAME, AccountConstants.MEMBER_ID_NAME, memberId, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
+    // 4. 리프레시 토큰 발급 (같은 인증 정보 사용, 만료 시간만 길게)
+    String refreshToken = tokenUtils.generateToken(authentication, AccountConstants.REFRESH_TOKEN_EXP_MINUTES);
 
-    // 리프레시 토큰 발급
-    String refreshToken = TokenUtils.generate(AccountConstants.REFRESH_TOKEN_NAME, AccountConstants.MEMBER_ID_NAME, memberId, AccountConstants.REFRESH_TOKEN_EXP_MINUTES);
-
-    // 리프레시 토큰 쿠키 저장(유효 시간을 0으로 입력해 웹 브라우저 종료 시 삭제)
+    // 5. 리프레시 토큰 쿠키 저장
     HttpUtils.setCookie(res, AccountConstants.REFRESH_TOKEN_NAME, refreshToken, 0);
 
-    // 💡 Builder를 사용하여 Member 엔티티의 데이터를 분리하여 DTO 생성
+    // 6. 응답 DTO 생성
+    // Authentication 의 Principal 은 CustomUserDetails 타입임
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    Member member = userDetails.getMember();
+
     return MemberLogin.builder()
-        .id(member.getId())             // Member 엔티티에서 ID를 가져옴
-        .loginId(member.getLoginId())   // Member 엔티티에서 LoginId를 가져옴
-        .name(member.getName())         // Member 엔티티에서 Name을 가져옴
-        .accessToken(accessToken)       // 발급된 토큰을 주입
-        .build();
+            .id(member.getId())
+            .loginId(member.getLoginId())
+            .name(member.getName())
+            .accessToken(accessToken)
+            .build();
   }
 
   // 회원 아이디 조회
@@ -108,23 +117,20 @@ public class TokenAccountHelper implements AccountHelper {
   // 로그인 여부 확인
   @Override
   public boolean isLoggedIn(HttpServletRequest req) { // ⑨
-    // 액세스 토큰이 유효하다면
-    if (TokenUtils.isValid((getAccessToken(req)))) {
-      log.info("here??!!");
+    String accessToken = getAccessToken(req);
+
+    // 1. 액세스 토큰 검증 (인스턴스 메서드 사용)
+    if (accessToken != null && tokenUtils.validateToken(accessToken)) {
       return true;
     }
 
-    // 리프레시 토큰 조회
+    // 2. 리프레시 토큰 검증
     String refreshToken = getRefreshToken(req);
-
-    // 리프레시 토큰의 유효성 확인
-    return TokenUtils.isValid(refreshToken) && !blockService.has(refreshToken);
+    return refreshToken != null
+            && tokenUtils.validateToken(refreshToken)
+            && !blockService.has(refreshToken);
   }
 
-  @Override
-  public MemberLogin getLoginUser(HttpServletRequest request) {
-    return null;
-  }
 
   // 로그아웃
   @Override
@@ -137,9 +143,8 @@ public class TokenAccountHelper implements AccountHelper {
       // 쿠키에서 삭제
       HttpUtils.removeCookie(res, AccountConstants.REFRESH_TOKEN_NAME);
 
-      // 토큰 차단 데이터에 해당 토큰이 없다면
-      if (!blockService.has(refreshToken)) {
-        // 차단 토큰으로 추가
+      // 토큰 차단 (유효한 토큰인 경우에만 차단 목록에 추가)
+      if (tokenUtils.validateToken(refreshToken) && !blockService.has(refreshToken)) {
         blockService.add(refreshToken);
       }
     }

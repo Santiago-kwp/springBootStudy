@@ -62,9 +62,9 @@ create table members(
 id int primary key auto_increment,
 name varchar(50) not null,
 login_id varchar(50) unique not null,
-login_pw varchar(44) not null,
-login_pw_salt char(16) NOT NULL comment '로그인 패스워드 솔트',
+login_pw varchar(100) not null,
 phone_number varchar(20) null comment '주요 연락처',
+role varchar(20) not null default 'ROLE_USER',
 created datetime default current_timestamp() not null,
 updated datetime not null default current_timestamp ON UPDATE current_timestamp
 );
@@ -136,7 +136,7 @@ VALUES
     (3, 1); -- 야간등반 (950,000원)
 
 
-
+drop table if exists blocks;
 create table blocks (
                         id      int auto_increment comment '아이디' primary key,
                         token   varchar(250)                         not null comment '차단 토큰',
@@ -145,7 +145,8 @@ create table blocks (
 
 
 -- 테이블 드롭 (테스트용, 기존 테이블이 있다면)
--- DROP TABLE IF EXISTS user_addresses;
+DROP TABLE IF EXISTS user_addresses;
+
 
 CREATE TABLE user_addresses (
 id BIGINT PRIMARY KEY AUTO_INCREMENT,

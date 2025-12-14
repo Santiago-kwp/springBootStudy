@@ -29,6 +29,6 @@ export const useAccountStore = defineStore("account", { // ①
   // 💡 [추가] 상태 영속성 설정
   persist: {
     storage: localStorage, // LocalStorage에 저장
-    paths: ['user'],       // user 객체만 저장 대상으로 지정
+    paths: ['user', 'accessToken', 'loggedIn'],
   }
 });

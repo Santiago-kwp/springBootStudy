@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +35,8 @@ public class AccountController {
 
   private final AccountHelper accountHelper;
   private final BlockService blockService; // ① 스프링 컨테이너에 의해 의존성 주입될 토큰 차단 서비스 필드
+  private final TokenUtils tokenUtils; // ① TokenUtils 주입 추가 (static 제거됨)
+
 
   // 이메일 형식 검증을 위한 정규표현식 (간단 버전)
   private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
@@ -81,12 +85,9 @@ public class AccountController {
       MemberLogin output = accountHelper.login(loginReq, req, res);
       return new ResponseEntity<>(output, HttpStatus.OK); // 200 OK
 
-    } catch (AccountNotFoundException e) { // 아이디 존재 안함 : 404 Not Found
-      log.info("Login failed: Account not found for loginId: {}", loginReq.getLoginId());
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-
-    } catch (InvalidPasswordException e) { // 비밀번호 틀린 경우 : 400 Bad Request
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    } catch (BadCredentialsException e) {
+      // 보안상 "아이디가 없다"고 콕 집어 말해주기보다는 "정보가 일치하지 않는다"고 하는 것이 안전함.
+      return new ResponseEntity<>("아이디 또는 비밀번호가 일치하지 않습니다!", HttpStatus.UNAUTHORIZED);
 
     } catch (Exception e) { // 그 외 예상치 못한 서버 오류
       log.info("An unexpected error occurred during login for loginId: {}", loginReq.getLoginId(), e);
@@ -105,7 +106,7 @@ public class AccountController {
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-// ② 액세스 토큰을 재발급하는 메서드. @GetMapping 애너테이션을 지정하여 HTTP GET요청을 매핑하고, 연결 경로로 /api/account/token 을 지정한다.
+// ② 액세스 토큰을 재발급하는 메서드. @GetMapping 애너테이션을 지정하여 HTTP GET 요청을 매핑하고, 연결 경로로 /api/account/token 을 지정한다.
 //   쿠키의 리프레시 토큰을 조회하고 이 값이 유효하다면 이 토큰을 활용하여 액세스 토큰을 발급하고 리턴한다.
 
   @GetMapping("/api/account/token")
@@ -113,16 +114,20 @@ public class AccountController {
     String accessToken = "";
     String refreshToken = HttpUtils.getCookieValue(req, AccountConstants.REFRESH_TOKEN_NAME);
 
-    // 리프레시 토큰이 유효하다면
-    if (StringUtils.hasLength(refreshToken) && TokenUtils.isValid(refreshToken) && !blockService.has(refreshToken)) {
-      // 리프레시 토큰의 내부 값 조회
-      Map<String, Object> tokenBody = TokenUtils.getBody(refreshToken);
+    // ③ 인스턴스 메서드(tokenUtils.validateToken) 사용
+    if (StringUtils.hasLength(refreshToken)
+            && tokenUtils.validateToken(refreshToken)
+            && !blockService.has(refreshToken)) {
 
-      // 리프레시 토큰의 회원 아이디 조회
-      Integer memberId = (Integer) tokenBody.get(AccountConstants.MEMBER_ID_NAME);
+      // ④ 토큰에서 Authentication 객체 추출 (Map 파싱 방식 대체)
+      Authentication authentication = tokenUtils.getAuthentication(refreshToken);
 
-      // 액세스 토큰 발급
-      accessToken = TokenUtils.generate(AccountConstants.ACCESS_TOKEN_NAME, AccountConstants.MEMBER_ID_NAME, memberId, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
+      // ⑤ 새 액세스 토큰 생성 (Authentication 객체 기반)
+      accessToken = tokenUtils.generateToken(authentication, AccountConstants.ACCESS_TOKEN_EXP_MINUTES);
+    }
+
+    if (!StringUtils.hasLength(accessToken)) {
+      return new ResponseEntity<>("토큰이 유효하지 않거나 만료되었습니다.", HttpStatus.UNAUTHORIZED);
     }
 
     return new ResponseEntity<>(accessToken, HttpStatus.OK);

@@ -1,63 +1,40 @@
 package com.ssg.myGallery.member.service;
 
-import com.ssg.myGallery.common.util.HashUtils;
 import com.ssg.myGallery.member.entity.Member;
 import com.ssg.myGallery.member.repository.MemberRepository;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class BaseMemberService implements MemberService{
+public class BaseMemberService implements MemberService {
 
   private final MemberRepository memberRepository;
+  private final PasswordEncoder passwordEncoder; // 주입
 
   public void save(String name, String loginId, String loginPw) {
-    // 솔트 생성
-    String loginPwSalt = HashUtils.generateSalt(16);
+    // BCrypt는 Salt를 내부적으로 생성하므로 별도 Salt 관리 불필요
 
-    // 입력 패스워드에 솔트를 적용
-    String loginPwSalted = HashUtils.generateHash(loginPw, loginPwSalt);
+    // 암호화
+    String encodedPw = passwordEncoder.encode(loginPw);
 
-    // 회원 데이터 저장
-    memberRepository.save(new Member(name, loginId, loginPwSalted, loginPwSalt));
+    String role = "ROLE_USER";
+
+    memberRepository.save(new Member(name, loginId, encodedPw, role));
   }
 
-  public Member find(String loginId, String loginPw) {
-    // 로그인 아이디로 회원 조회
-    Optional<Member> memberOptional = memberRepository.findByLoginId(loginId);
+  // find(id, pw) 메서드는 이제 Security가 대신하므로 삭제하거나 findByLoginId만 남김
+  public Optional<Member> findByLoginId(String loginId) {
+    return memberRepository.findByLoginId(loginId);
+  }
 
-    // 회원 데이터가 있으면
-    if (memberOptional.isPresent()) {
-      Member member = memberOptional.get();
-
-      // 솔트 조회
-      String loginPwSalt = memberOptional.get().getLoginPwSalt();
-
-      // 입력 패스워드에 솔트를 적용
-      String loginPwSalted = HashUtils.generateHash(loginPw, loginPwSalt);
-
-      // 저장된 회원 로그인 패스워드와 일치한다면
-      if (member.getLoginPw().equals(loginPwSalted)) {
-        return member;
-      }
-    }
-
-    return null;
+  public boolean isLoginIdExists(String loginId) {
+    return memberRepository.existsByLoginId(loginId);
   }
 
   public Member findById(Integer id) {
-    Optional<Member> member =  memberRepository.findById(id);
-    return member.orElse(null);
+    return memberRepository.findById(id).orElse(null);
   }
-
-   public boolean isLoginIdExists(String loginId) {
-     return memberRepository.existsByLoginId(loginId);
-   }
-
-   public Optional<Member> findByLoginId(String loginId) {
-    return memberRepository.findByLoginId(loginId);
-   }
-
 }

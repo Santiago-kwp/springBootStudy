@@ -25,11 +25,12 @@ public class Member {
   @Column(length = 50, nullable = false, unique = true)
   private String loginId;
 
-  @Column(length = 44, nullable = false)
+  @Column(length = 100, nullable = false)
   private String loginPw;
 
-  @Column(length = 16, nullable = false)
-  private String loginPwSalt;
+
+  @Column(length = 20, nullable = false)
+  private String role;  // 예: "ROLE_USER", "ROLE_ADMIN"
 
   @Column(updatable = false, nullable = false)
   @CreationTimestamp  // 데이터 삽입 시 값이 없다면 현재 시간이 입력되도록 한다.
@@ -37,11 +38,11 @@ public class Member {
 
   public Member() {}
 
-  public Member(String name, String loginId, String loginPw, String loginPwSalt) {
+  public Member(String name, String loginId, String loginPw, String role) {
     this.name = name;
     this.loginId = loginId;
     this.loginPw = loginPw;
-    this.loginPwSalt = loginPwSalt;
+    this.role = role;
   }
 
 
