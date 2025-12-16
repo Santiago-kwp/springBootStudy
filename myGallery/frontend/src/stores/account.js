@@ -4,10 +4,10 @@ import {defineStore} from 'pinia'
 
 export const useAccountStore = defineStore("account", { // ①
   state: () => ({
-    checked: false, // ②
-    loggedIn: false, // ③
+    checked: false,
+    loggedIn: false,
     user: null, // 사용자 정보 ~ memberLogin DTO에서 넘어온 정보  => LocalStorate에 저장
-    accessToken: "", // ①  액세스 토큰 프로퍼티 문자열 타입
+    accessToken: "", // 액세스 토큰 프로퍼티 문자열 타입
   }),
   actions: {
     setChecked(val) { // ④

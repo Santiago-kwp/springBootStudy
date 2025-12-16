@@ -2,14 +2,12 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'; // 💡 임포트
 
-
-
 import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
 const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate);
+pinia.use(piniaPluginPersistedstate); // 사용자가 새로고침 혹은 브라우저를 닫았다가 다시 열어도 상태가 유지
 
 app.use(pinia)
 app.use(router)
